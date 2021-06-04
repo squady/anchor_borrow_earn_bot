@@ -1,0 +1,10 @@
+version: '3'
+
+
+services:
+  anchor_bot:
+    build: 
+      context:
+        ./
+    restart: unless-stopped
+    container_name: anchor_bot
