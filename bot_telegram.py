@@ -152,7 +152,7 @@ class bot_telegram(Observable):
             await state.set_data({"from":from_state, "type_tvl":type_tvl})
                     
             fr_markeup = force_reply.ForceReply()
-            await message.reply("Please set the new TVL target :", reply=True, reply_markup=fr_markeup)
+            await message.reply("Please set the new value :", reply=True, reply_markup=fr_markeup)
 
         except Exception as e:
             self._log.exception(e)
