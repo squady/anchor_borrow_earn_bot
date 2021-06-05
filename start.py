@@ -104,6 +104,7 @@ class Main():
 
     async def get_borrow_infos(self):
         try:
+            await bot_telegram.show_is_typing()
             wallet_address = self._wallet.get_wallet_address()
             borrow_value = await Anchor.get_borrow_value(wallet_address)
             borrow_limit = await Anchor.get_borrow_limit(wallet_address)
@@ -143,7 +144,7 @@ class Main():
 
     async def get_earn_infos(self):
         try:
-
+            await bot_telegram.show_is_typing()
             wallet_address = self._wallet.get_wallet_address()
             total_deposit = await Anchor.get_total_deposit_amount(wallet_address)
             earn_apy = await Anchor.get_earn_apy()
@@ -162,6 +163,7 @@ class Main():
 
     async def get_wallet_infos(self):
         try:
+            await bot_telegram.show_is_typing()
             wallet_address = self._wallet.get_wallet_address()
             uusd_amount = await self._wallet.get_uusd_amount()
 
@@ -181,7 +183,8 @@ class Main():
     async def fetch_tvl(self):
         error_occured = False
         try:
-            await bot_telegram.send_message("Sets the TVL to the target value ...", False)
+            
+            await bot_telegram.send_message("Sets the TVL to the target value ...", show_keyboard=False, show_typing=True)
             wallet_address = self._wallet.get_wallet_address()
             current_tvl = await Anchor.get_current_tvl(wallet_address)
             if (current_tvl is not None):
@@ -189,7 +192,7 @@ class Main():
                     # do withdraxw if need
                     # then do repay
                     amount_to_repay = await Anchor.get_amount_to_repay(wallet_address, self._target_tvl)
-                    await bot_telegram.send_message("Needs to repay to reach TVL ...", False)
+                    await bot_telegram.send_message("Needs to repay to reach TVL ...", show_keyboard=False, show_typing=True)
                     await self.do_withdraw_if_needed_and_repay(self._wallet, int(amount_to_repay))
 
 
@@ -197,7 +200,7 @@ class Main():
                     # do borrow
                     amount_to_borrow = await Anchor.get_amount_to_borrow(wallet_address, self._target_tvl)
                     # await bot_telegram.send_message("Borrowing <code>{}$</code> and deposit it on earn ...".format(Helper.to_human_value(amount_to_borrow)), False)
-                    await bot_telegram.send_message("Needs to borrow to reach TVL ...", False)                
+                    await bot_telegram.send_message("Needs to borrow to reach TVL ...", show_keyboard=False, show_typing=True)                
                     await self.do_borrow_and_deposit(self._wallet, amount_to_borrow)
             else:
                 raise AnchorException(inspect.currentframe().f_code.co_name , -1, "You must provide a collateral on Anchor to use this bot")
@@ -205,7 +208,7 @@ class Main():
         except AnchorException as e:
             error_occured = True
             self._log.exception(e)
-            await bot_telegram.send_message(e.to_telegram_str(), False)
+            await bot_telegram.send_message(e.to_telegram_str(), show_keyboard=False, show_typing=True)
         
         except Exception as e:
             error_occured = True
@@ -227,21 +230,21 @@ class Main():
             # need to withdraw
             total_deposit = await Anchor.get_total_deposit_amount(wallet_address) 
             amount_to_repay = amount_to_repay - uusd_amount_in_wallet
-            await bot_telegram.send_message("Not enough liquidity, withdrawing from earn <code>{}$</code> ...".format(Helper.to_human_value(amount_to_repay)), False)
+            await bot_telegram.send_message("Not enough liquidity, withdrawing from earn <code>{}$</code> ...".format(Helper.to_human_value(amount_to_repay)), show_keyboard=False, show_typing=True)
             if (total_deposit > amount_to_repay):
                 await Anchor.do_withdraw_from_earn(wallet._wallet, int(amount_to_repay))
                 await asyncio.sleep(PAUSE_BETWEEN_TRX_S)
                 # await bot_telegram.send_message("done.", False)
 
 
-        await bot_telegram.send_message("Repaying <code>{}$</code> ...".format(Helper.to_human_value(amount_to_repay)), False)
+        await bot_telegram.send_message("Repaying <code>{}$</code> ...".format(Helper.to_human_value(amount_to_repay)), show_keyboard=False, show_typing=True)
         await Anchor.do_repay_amount(wallet._wallet, int(amount_to_repay))
 
     async def do_borrow_and_deposit(self, wallet, amount_to_borrow):
 
-        await bot_telegram.send_message("Borrowing <code>{}$</code> ...".format(Helper.to_human_value(amount_to_borrow)), False)
+        await bot_telegram.send_message("Borrowing <code>{}$</code> ...".format(Helper.to_human_value(amount_to_borrow)), show_keyboard=False, show_typing=True)
         await Anchor.do_borrow_amount(wallet._wallet, amount_to_borrow)
-        await bot_telegram.send_message("Depositing <code>{}$</code> to earn...".format(Helper.to_human_value(amount_to_borrow)), False)
+        await bot_telegram.send_message("Depositing <code>{}$</code> to earn...".format(Helper.to_human_value(amount_to_borrow)), show_keyboard=False, show_typing=True)
         await asyncio.sleep(PAUSE_BETWEEN_TRX_S)
         await Anchor.do_deposit_to_earn(wallet._wallet, amount_to_borrow)
 
@@ -302,7 +305,7 @@ class Main():
         error_occured = False
         try:
             amount_to_deposit = kwargs["amount"]         
-            await bot_telegram.send_message("Trying to deposit <code>{}$</code> to earn ...".format(amount_to_deposit), False)
+            await bot_telegram.send_message("Trying to deposit <code>{}$</code> to earn ...".format(amount_to_deposit), show_keyboard=False, show_typing=True)
             amount_to_deposit = int(Helper.to_terra_value(float(amount_to_deposit)))
             uusd_amount = await self._wallet.get_uusd_amount()
             uusd_amount = uusd_amount - Helper.to_terra_value(20)
@@ -315,7 +318,7 @@ class Main():
         except AnchorException as e:
             error_occured = True
             self._log.exception(e)
-            await bot_telegram.send_message(e.to_telegram_str(), False)
+            await bot_telegram.send_message(e.to_telegram_str(), show_keyboard=False, show_typing=True)
         
         except Exception as e:
             error_occured = True
@@ -333,15 +336,15 @@ class Main():
         try:
             amount_rewards = await Anchor.get_pending_rewards(self._wallet.get_wallet_address())
             if (amount_rewards > 0):
-                await bot_telegram.send_message("Claiming <code>{} ANC</code> rewards ...".format(Helper.to_human_value(amount_rewards)), False)
+                await bot_telegram.send_message("Claiming <code>{} ANC</code> rewards ...".format(Helper.to_human_value(amount_rewards)), show_keyboard=False, show_typing=True)
                 await Anchor.do_claim_anc_rewards(self._wallet._wallet)
             else:
-                await bot_telegram.send_message("No rewards to claim", False)
+                await bot_telegram.send_message("No rewards to claim", show_keyboard=False, show_typing=True)
 
         except AnchorException as e:
             error_occured = True
             self._log.exception(e)
-            await bot_telegram.send_message(e.to_telegram_str(), False)
+            await bot_telegram.send_message(e.to_telegram_str(), show_keyboard=False, show_typing=True)
         
         except Exception as e:
             error_occured = True
@@ -359,7 +362,7 @@ class Main():
             current_tvl = kwargs["current_tvl"]
             message = "❗️ TVL too low ❗️\n"
             message += "Min is : <code>{}%</code> Current is : <code>{}%</code>".format(self._min_tvl, current_tvl)
-            await bot_telegram.send_message(message, False)
+            await bot_telegram.send_message(message, show_keyboard=False, show_typing=True)
             await self.fetch_tvl()
 
         except Exception as e:
@@ -370,7 +373,7 @@ class Main():
             current_tvl = kwargs["current_tvl"]
             message = "❗️ TVL too high ❗️\n"
             message += "Max is : <code>{}%</code> Current is : <code>{}%</code>".format(self._max_tvl, current_tvl)
-            await bot_telegram.send_message(message, False)
+            await bot_telegram.send_message(message, show_keyboard=False, show_typing=True)
             await self.fetch_tvl()
 
         except Exception as e:

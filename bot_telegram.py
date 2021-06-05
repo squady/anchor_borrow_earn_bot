@@ -1,6 +1,7 @@
 # from aiogram.types.reply_keyboard import ReplyKeyboardMarkup
 from typing import Text
 from aiogram.types import callback_query, force_reply, reply_keyboard
+from aiogram.types.chat import ChatActions
 from aiogram.types.inline_keyboard import InlineKeyboardButton
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -260,7 +261,7 @@ class bot_telegram(Observable):
             
 
 
-    async def send_message(message, show_keyboard = True):
+    async def send_message(message, show_keyboard=True, show_typing=False):
         if (bot_telegram.bot is not None and 
                 bot_telegram.owner_chat_id is not None and
                 bot_telegram.keyboard_main_menu is not None):
@@ -270,3 +271,9 @@ class bot_telegram(Observable):
             else:
                 # bot_telegram.bot.send_message()
                 await bot_telegram.bot.send_message(bot_telegram.owner_chat_id, message, reply_markup=reply_keyboard.ReplyKeyboardRemove())
+
+            if (show_typing == True):
+                await bot_telegram.show_is_typing()
+
+    async def show_is_typing():
+        await bot_telegram.bot.send_chat_action(bot_telegram.owner_chat_id, action=ChatActions.TYPING)
