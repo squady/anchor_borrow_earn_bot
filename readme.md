@@ -90,6 +90,7 @@ then \
 - Borrowed amount
 - Borrow Limit amount
 - Pending $ANC rewards
+- Current Borrow APY
 
 ![image](./imgs/borrow_infos.png)
 
@@ -144,7 +145,7 @@ If the bot is borrowing, it will deposit automatically the amount to Earn
 
 ## Deposit UST to earn
 If you have some unused UST in your wallet, you can do a deposit to Earn. \
-The bos ask you the amount you want to deposit. \
+The bot ask you the amount you want to deposit. \
 Keep in mind, you must have this amount in your wallet.
 
 ![image](./imgs/deposit.png)
