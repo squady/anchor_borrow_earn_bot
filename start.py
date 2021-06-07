@@ -255,8 +255,8 @@ class Main():
 
 
             else:
-                amount_to_withdraw = earn_balance - uusd_amount_in_wallet
-                await bot_telegram.send_message("Not enough liquidity, withdrawing <code>{}$</code> from earn ...".format(Helper.to_human_value(earn_balance)), show_keyboard=False, show_typing=True)
+                amount_to_withdraw = amount_to_repay - uusd_amount_in_wallet
+                await bot_telegram.send_message("Not enough liquidity, withdrawing <code>{}$</code> from earn ...".format(Helper.to_human_value(amount_to_withdraw)), show_keyboard=False, show_typing=True)
                 await Anchor.do_withdraw_from_earn(wallet._wallet, int(amount_to_withdraw))
                 await asyncio.sleep(PAUSE_BETWEEN_TRX_S)
                 amount_to_repay = await wallet.get_uusd_amount()
