@@ -63,7 +63,7 @@ class Main():
         self._log.info("MAX TVL = {}".format(self._max_tvl))
         self._log.info("===========================================")
 
-
+        
         self._bot_telegram = bot_telegram(self._telegram_token,self._telegram_chat_id)
         self._wallet = TerraWallet(self._wallet_name, self._mnemonic)
         self._looper = Looper(self._wallet, self._target_tvl, self._min_tvl, self._max_tvl)
@@ -85,6 +85,7 @@ class Main():
 
     async def start(self):
         try:
+            await Anchor.get_config()
             await asyncio.gather(
                 self._bot_telegram.start(), 
                 self._looper.start())
@@ -106,6 +107,7 @@ class Main():
         try:
             await bot_telegram.show_is_typing()
             wallet_address = self._wallet.get_wallet_address()
+            borrow_apy = await Anchor.get_borrow_apy()
             borrow_value = await Anchor.get_borrow_value(wallet_address)
             borrow_limit = await Anchor.get_borrow_limit(wallet_address)
             if (borrow_value != 0 and borrow_limit != 0):
@@ -127,6 +129,7 @@ class Main():
                 message += "💴 Borrowed: <code>{}$</code>\n".format(Helper.to_human_value(borrow_value))
                 message += "💴 Limit: <code>{}$</code>\n".format(Helper.to_human_value(borrow_limit))
                 message += "💴 Pending Rewards: <code>{}$ANC</code>\n".format(Helper.to_human_value(pending_rewards))
+                message += "💴 Borrow APY: <code>{}%</code>\n".format(borrow_apy)
 
                 await bot_telegram.send_message(message)
 
@@ -167,9 +170,11 @@ class Main():
             wallet_address = self._wallet.get_wallet_address()
             uusd_amount = await self._wallet.get_uusd_amount()
 
-            message = "<b>Wallet datas</b>\n"
-            message += "💴 Address : <a href='{}'>{}</a>\n".format(self._wallet.get_wallet_url(), wallet_address)
-            message += "💴 UUSD : <code>{}$</code>\n".format(Helper.to_human_value(uusd_amount))
+            message = "<b><a href='{}'>{}</a></b>\n".format(self._wallet.get_wallet_url(), self._wallet_name)
+            message += "🔗 Chain id: <code>{}</code>\n".format(self._chain_id)
+            message += "🌎 Chain url: <code>{}</code>\n".format(self._chain_url)
+            message += "💴 Address: <code>{}</code>\n".format(wallet_address)
+            message += "💴 UUSD: <code>{}$</code>\n".format(Helper.to_human_value(uusd_amount))
             await bot_telegram.send_message(message)
 
         except AnchorException as e:

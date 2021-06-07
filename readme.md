@@ -13,8 +13,7 @@ WALLET_NAME=Wallet#1
 CHAIN_ID=columbus-4
 CHAIN_URL=https://fcd.terra.dev
 ANCHOR_mmMarket=terra1sepfj7s0aeg5967uxnfk4thzlerrsktkpelm5s
-ANCHOR_mmOverseer=terra1tmnqgvg567ypvsvk6rwsga3srp7e3lg6u0elp8
-ANCHOR_aTerra=terra1hzh9vpxhsk8253se0vv5jj6etdvxu3nv8z07zu
+Mantle_endpoint=https://mantle.anchorprotocol.com
 TARGET_TVL=35
 MAX_TVL=40
 MIN_TVL=30
@@ -25,7 +24,7 @@ TELEGRAM_CHAT_ID=<OWNER_CHAT_ID>
 > this is the base64 encoded mnemonic phrase of your wallet, dont share it !!
 
 **WALLET_NAME**
-> (WIP, not yet used) this is the name of your wallet
+> this is the name of your wallet
 
 **CHAIN_ID**
 > terra chain id to use :
@@ -42,15 +41,11 @@ TELEGRAM_CHAT_ID=<OWNER_CHAT_ID>
 > - terra1sepfj7s0aeg5967uxnfk4thzlerrsktkpelm5s ***mainnet***
 > - terra15dwd5mj8v59wpj0wvt233mf5efdff808c5tkal ***tequila testnet***
 
-**ANCHOR_mmOverseer**
-> Anchor mmOverseer contract address to use :
-> - terra1tmnqgvg567ypvsvk6rwsga3srp7e3lg6u0elp8 ***mainnet***
-> - terra15dwd5mj8v59wpj0wvt233mf5efdff808c5tkal ***tequila testnet***
+**Mantle_endpoint**
+> Mantle endpoint to get borrow APY :
+> - https://mantle.anchorprotocol.com ***mainnet***
+> - https://tequila-mantle.anchorprotocol.com ***tequila testnet***
 
-**ANCHOR_aTerra**
-> Anchor aTerra contract address to use :
-> - terra1hzh9vpxhsk8253se0vv5jj6etdvxu3nv8z07zu ***mainnet***
-> - terra1ajt556dpzvjwl0kl5tzku3fc3p3knkg9mkv8jl ***tequila testnet***
 
 **TARGET_TVL**
 > the target TVL for your borrow
@@ -105,6 +100,9 @@ then \
 ![image](./imgs/earn_infos.png)
 
 ## Show your wallet infos
+- wallet name
+- chain id
+- chain url
 - wallet address
 - uusd amount in your wallet 
 
