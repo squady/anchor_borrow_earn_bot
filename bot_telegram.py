@@ -1,4 +1,3 @@
-# from aiogram.types.reply_keyboard import ReplyKeyboardMarkup
 from typing import Text
 from aiogram.types import callback_query, force_reply, reply_keyboard
 from aiogram.types.chat import ChatActions
@@ -64,7 +63,6 @@ class bot_telegram(Observable):
             if (bot_telegram.bot is not None):
                 self._disp = Dispatcher(bot=bot_telegram.bot, storage=self._storage)
                 self._disp.register_message_handler(self.start_handler, state="*")
-                await bot_telegram.send_message("Bot started")                
                 await self._disp.start_polling()
         except Exception as e:
             self._log.exception(e)

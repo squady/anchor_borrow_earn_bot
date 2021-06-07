@@ -47,6 +47,8 @@ class Main():
         self._max_tvl = float(os.environ.get("MAX_TVL", 40))
         self._chain_id = os.environ.get("CHAIN_ID", "tequila-0004")
         self._chain_url = os.environ.get("CHAIN_URL", "https://tequila-lcd.terra.dev")
+        self._minimum_ust_amount = int(os.environ.get("UST_MIN_AMOUNT_ALERT", 2))
+
 
         
         self._log.info("===========================================")
@@ -61,6 +63,7 @@ class Main():
         self._log.info("MIN TVL = {}".format(self._min_tvl))
         self._log.info("Target TVL = {}".format(self._target_tvl))
         self._log.info("MAX TVL = {}".format(self._max_tvl))
+        self._log.info("Min UST Alert = {}".format(self._minimum_ust_amount))
         self._log.info("===========================================")
 
         
@@ -86,6 +89,7 @@ class Main():
     async def start(self):
         try:
             await Anchor.get_config()
+            await self.check_if_enough_ust_for_fees()
             await asyncio.gather(
                 self._bot_telegram.start(), 
                 self._looper.start())
@@ -146,7 +150,7 @@ class Main():
 
 
     async def get_earn_infos(self):
-        try:
+        try:            
             await bot_telegram.show_is_typing()
             wallet_address = self._wallet.get_wallet_address()
             total_deposit = await Anchor.get_total_deposit_amount(wallet_address)
@@ -166,6 +170,7 @@ class Main():
 
     async def get_wallet_infos(self):
         try:
+            await self.check_if_enough_ust_for_fees()
             await bot_telegram.show_is_typing()
             wallet_address = self._wallet.get_wallet_address()
             uusd_amount = await self._wallet.get_uusd_amount()
@@ -188,7 +193,7 @@ class Main():
     async def fetch_tvl(self):
         error_occured = False
         try:
-            
+            await self.check_if_enough_ust_for_fees()
             await bot_telegram.send_message("Sets the TVL to the target value ...", show_keyboard=False, show_typing=True)
             wallet_address = self._wallet.get_wallet_address()
             current_tvl = await Anchor.get_current_tvl(wallet_address)
@@ -230,20 +235,37 @@ class Main():
         wallet_address = wallet.get_wallet_address()
         uusd_amount_in_wallet = await wallet.get_uusd_amount()
         uusd_amount_in_wallet = max(uusd_amount_in_wallet - Helper.to_terra_value(20), 0)
-        
+
+
         if (uusd_amount_in_wallet < amount_to_repay):
-            # need to withdraw
-            total_deposit = await Anchor.get_total_deposit_amount(wallet_address) 
-            amount_to_repay = amount_to_repay - uusd_amount_in_wallet
-            await bot_telegram.send_message("Not enough liquidity, withdrawing from earn <code>{}$</code> ...".format(Helper.to_human_value(amount_to_repay)), show_keyboard=False, show_typing=True)
-            if (total_deposit > amount_to_repay):
-                await Anchor.do_withdraw_from_earn(wallet._wallet, int(amount_to_repay))
+            earn_balance = await Anchor.get_balance_on_earn(wallet_address)
+            if (uusd_amount_in_wallet + earn_balance < amount_to_repay):
+                await bot_telegram.send_message("Not enough liquidity, checking the amount available on earn...", show_keyboard=False, show_typing=True)
+                if (earn_balance > Helper.to_terra_value(10)):
+                    await bot_telegram.send_message("Withdrawing <code>{}$</code> from earn ...".format(Helper.to_human_value(earn_balance)), show_keyboard=False, show_typing=True)
+                    await Anchor.do_withdraw_from_earn(wallet._wallet, int(earn_balance))
+                    await asyncio.sleep(PAUSE_BETWEEN_TRX_S)
+                    amount_to_repay = await wallet.get_uusd_amount()
+                    amount_to_repay = max(amount_to_repay - Helper.to_terra_value(20), 0)
+                elif (uusd_amount_in_wallet > Helper.to_terra_value(10)):
+                    await bot_telegram.send_message("Only <code>{}$</code> available on earn, no need to withdraw them ...".format(Helper.to_human_value(earn_balance)), show_keyboard=False, show_typing=True)
+                    amount_to_repay = uusd_amount_in_wallet
+                else:
+                    raise AnchorException(inspect.currentframe().f_code.co_name, -1, "❗️ Not enough liquidity available, you must handle it by yourself ❗️")
+
+
+            else:
+                amount_to_withdraw = earn_balance - uusd_amount_in_wallet
+                await bot_telegram.send_message("Not enough liquidity, withdrawing <code>{}$</code> from earn ...".format(Helper.to_human_value(earn_balance)), show_keyboard=False, show_typing=True)
+                await Anchor.do_withdraw_from_earn(wallet._wallet, int(amount_to_withdraw))
                 await asyncio.sleep(PAUSE_BETWEEN_TRX_S)
-                # await bot_telegram.send_message("done.", False)
+                amount_to_repay = await wallet.get_uusd_amount()
+                amount_to_repay = max(amount_to_repay - Helper.to_terra_value(20), 0)
 
 
         await bot_telegram.send_message("Repaying <code>{}$</code> ...".format(Helper.to_human_value(amount_to_repay)), show_keyboard=False, show_typing=True)
         await Anchor.do_repay_amount(wallet._wallet, int(amount_to_repay))
+        
 
     async def do_borrow_and_deposit(self, wallet, amount_to_borrow):
 
@@ -309,6 +331,7 @@ class Main():
     async def set_deposit_amount(self, **kwargs):
         error_occured = False
         try:
+            await self.check_if_enough_ust_for_fees()
             amount_to_deposit = kwargs["amount"]         
             await bot_telegram.send_message("Trying to deposit <code>{}$</code> to earn ...".format(amount_to_deposit), show_keyboard=False, show_typing=True)
             amount_to_deposit = int(Helper.to_terra_value(float(amount_to_deposit)))
@@ -339,6 +362,7 @@ class Main():
     async def claim_rewards(self, **kwargs):
         error_occured = False
         try:
+            await self.check_if_enough_ust_for_fees()
             amount_rewards = await Anchor.get_pending_rewards(self._wallet.get_wallet_address())
             if (amount_rewards > 0):
                 await bot_telegram.send_message("Claiming <code>{} ANC</code> rewards ...".format(Helper.to_human_value(amount_rewards)), show_keyboard=False, show_typing=True)
@@ -384,8 +408,17 @@ class Main():
         except Exception as e:
             self._log.exception(e)        
 
+    
 
+    async def check_if_enough_ust_for_fees(self):
+        try:
+            uusd_amount = await self._wallet.get_uusd_amount()
+            uusd_amount = Helper.to_human_value(uusd_amount)
+            if (uusd_amount < self._minimum_ust_amount):
+                await bot_telegram.send_message("❗️ Be careful you only have <code>{}$</code> left in your wallet to pay the fees, transactions may fail ❗️".format(uusd_amount))
 
+        except Exception as e:
+            self._log.exception(e)
 
 
 if __name__ == "__main__":

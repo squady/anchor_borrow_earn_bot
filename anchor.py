@@ -55,11 +55,15 @@ class Anchor():
 
 
 
-        except Exception as e:
+        except LCDResponseError as e:
             Anchor.log.exception(e)
+            raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)
+            
+
 
 
     async def get_block_height():
+
         block_info = await TerraChain.chain.tendermint.block_info()
         block_height = int(block_info["block"]["header"]["height"])
 
@@ -77,8 +81,6 @@ class Anchor():
             Anchor.log.exception(e)
             raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)
             
-        except Exception as e:
-            raise AnchorException(inspect.currentframe().f_code.co_name, type(e).__name__, e.args[0] if e.args[0] else "")
 
 
         return borrow_value
@@ -95,8 +97,6 @@ class Anchor():
             Anchor.log.exception(e)
             raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)
             
-        except Exception as e:
-            raise AnchorException(inspect.currentframe().f_code.co_name, type(e).__name__, e.args[0] if e.args[0] else "")
 
 
         return borrow_limit
@@ -113,8 +113,6 @@ class Anchor():
             Anchor.log.exception(e)
             raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)
             
-        except Exception as e:
-            raise AnchorException(inspect.currentframe().f_code.co_name, type(e).__name__, e.args[0] if e.args[0] else "")
 
 
         return pending_rewards
@@ -123,21 +121,18 @@ class Anchor():
 
     async def get_current_tvl(wallet_address, borrow_value = None, borrow_limit = None):
         current_tvl = None
-        try:
-            if (borrow_value is None):
-                borrow_value = await Anchor.get_borrow_value(wallet_address)
-            if (borrow_limit is None):
-                borrow_limit = await Anchor.get_borrow_limit(wallet_address)
 
-            if (borrow_value != 0 and borrow_limit != 0):
-                # (v1*100/v2)
-                current_tvl = round((borrow_value * 100) / (borrow_limit * 2), 2)
+        if (borrow_value is None):
+            borrow_value = await Anchor.get_borrow_value(wallet_address)
+        if (borrow_limit is None):
+            borrow_limit = await Anchor.get_borrow_limit(wallet_address)
 
-        except AnchorException as e:
-            raise e
+        if (borrow_value != 0 and borrow_limit != 0):
+            # (v1*100/v2)
+            current_tvl = round((borrow_value * 100) / (borrow_limit * 2), 2)
 
-        except Exception as e:
-            raise AnchorException(inspect.currentframe().f_code.co_name, type(e).__name__, e.args[0] if e.args[0] else "")
+
+
 
         return current_tvl
 
@@ -175,82 +170,110 @@ class Anchor():
 
 
     async def do_repay_amount(wallet, amount_to_repay):
+        try:
+            query = {"repay_stable": {}}
+            tx = await wallet.create_and_sign_tx(
+                    msgs=[MsgExecuteContract(wallet.key.acc_address,
+                                                contract=Anchor.Address["mmMarket"],
+                                                execute_msg=query,
+                                                coins=Coins(uusd=amount_to_repay))],
+                    gas_prices="1uusd",
+                    gas_adjustment="1.2",
+                    fee_denoms=["uusd"])
 
-        query = {"repay_stable": {}}
-        tx = await wallet.create_and_sign_tx(
-                msgs=[MsgExecuteContract(wallet.key.acc_address,
-                                            contract=Anchor.Address["mmMarket"],
-                                            execute_msg=query,
-                                            coins=Coins(uusd=amount_to_repay))],
-                gas_prices="1uusd",
-                gas_adjustment="1.2",
-                fee_denoms=["uusd"])
 
+            result = await TerraChain.chain.tx.broadcast(tx)
+            if (result.is_tx_error()):
+                raise AnchorException(inspect.currentframe().f_code.co_name, result.code, result.raw_log)
 
-        result = await TerraChain.chain.tx.broadcast(tx)
-        if (result.is_tx_error()):
-            raise AnchorException(inspect.currentframe().f_code.co_name, result.code, result.raw_log)
+        except LCDResponseError as e:
+            Anchor.log.exception(e)
+            raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)            
 
     async def do_borrow_amount(wallet, amount_to_borrow):
-        query = {"borrow_stable": {"borrow_amount": str(amount_to_borrow), "to": wallet.key.acc_address}}
-        tx = await wallet.create_and_sign_tx(
-                msgs=[MsgExecuteContract(wallet.key.acc_address,
-                                            contract=Anchor.Address["mmMarket"],
-                                            execute_msg=query)],
-                gas_prices="1uusd",
-                gas_adjustment="1.2",
-                fee_denoms=["uusd"])
+        try:
 
-        result = await TerraChain.chain.tx.broadcast(tx)
-        if (result.is_tx_error()):
-            raise AnchorException(inspect.currentframe().f_code.co_name, result.code, result.raw_log)
+            query = {"borrow_stable": {"borrow_amount": str(amount_to_borrow), "to": wallet.key.acc_address}}
+            tx = await wallet.create_and_sign_tx(
+                    msgs=[MsgExecuteContract(wallet.key.acc_address,
+                                                contract=Anchor.Address["mmMarket"],
+                                                execute_msg=query)],
+                    gas_prices="1uusd",
+                    gas_adjustment="1.2",
+                    fee_denoms=["uusd"])
+
+            result = await TerraChain.chain.tx.broadcast(tx)
+            if (result.is_tx_error()):
+                raise AnchorException(inspect.currentframe().f_code.co_name, result.code, result.raw_log)
+
+        except LCDResponseError as e:
+            Anchor.log.exception(e)
+            raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)
 
     async def do_withdraw_from_earn(wallet, amount_to_withdraw):
-        b64 = dict_to_b64({"redeem_stable": {}})
-        msg = {"send": {"contract": Anchor.Address["mmMarket"],"amount": str(amount_to_withdraw), "msg": b64}}
-        tx = await wallet.create_and_sign_tx(
-                msgs=[MsgExecuteContract(wallet.key.acc_address,
-                                            contract=Anchor.Address["aterra_contract"],
-                                            execute_msg=msg)],
-                gas_prices="1uusd",
-                gas_adjustment="1.2",
-                fee_denoms=["uusd"])
+        try:
+            b64 = dict_to_b64({"redeem_stable": {}})
+            msg = {"send": {"contract": str(Anchor.Address["mmMarket"]),"amount": str(amount_to_withdraw), "msg": b64}}
+            tx = await wallet.create_and_sign_tx(
+                    msgs=[MsgExecuteContract(wallet.key.acc_address,
+                                                contract=Anchor.Address["aterra_contract"],
+                                                execute_msg=msg)],
+                    gas_prices="1uusd",
+                    gas_adjustment="1.2",
+                    fee_denoms=["uusd"])
 
-        result = await TerraChain.chain.tx.broadcast(tx)
-        if (result.is_tx_error()):
-            raise AnchorException(inspect.currentframe().f_code.co_name,result.code, result.raw_log)
+            result = await TerraChain.chain.tx.broadcast(tx)
+            if (result.is_tx_error()):
+                raise AnchorException(inspect.currentframe().f_code.co_name,result.code, result.raw_log)
+
+
+        except LCDResponseError as e:
+            Anchor.log.exception(e)
+            raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)
+            
+
+            
+
 
     async def do_deposit_to_earn(wallet, amount_to_deposit):
-        query = {"deposit_stable": {}}
-        tx = await wallet.create_and_sign_tx(
-                msgs=[MsgExecuteContract(wallet.key.acc_address,
-                                        contract=Anchor.Address["mmMarket"],
-                                        execute_msg=query,
-                                        coins=Coins(uusd=amount_to_deposit))],
-                gas_prices="1uusd",
-                gas_adjustment="1.2",
-                fee_denoms=["uusd"])
+        try:
+            query = {"deposit_stable": {}}
+            tx = await wallet.create_and_sign_tx(
+                    msgs=[MsgExecuteContract(wallet.key.acc_address,
+                                            contract=Anchor.Address["mmMarket"],
+                                            execute_msg=query,
+                                            coins=Coins(uusd=amount_to_deposit))],
+                    gas_prices="1uusd",
+                    gas_adjustment="1.2",
+                    fee_denoms=["uusd"])
 
 
-        result = await TerraChain.chain.tx.broadcast(tx)
-        if (result.is_tx_error()):
-            raise AnchorException(inspect.currentframe().f_code.co_name,result.code, result.raw_log)
+            result = await TerraChain.chain.tx.broadcast(tx)
+            if (result.is_tx_error()):
+                raise AnchorException(inspect.currentframe().f_code.co_name,result.code, result.raw_log)
+
+        except LCDResponseError as e:
+            Anchor.log.exception(e)
+            raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)
 
     async def do_claim_anc_rewards(wallet):
+        try:
+            query = {"claim_rewards": {"to": wallet.key.acc_address}}
+            tx = await wallet.create_and_sign_tx(
+                    msgs=[MsgExecuteContract(wallet.key.acc_address,
+                                                contract=Anchor.Address["mmMarket"],
+                                                execute_msg=query)],
+                    gas_prices="1uusd",
+                    gas_adjustment="1.2",
+                    fee_denoms=["uusd"])
 
-        query = {"claim_rewards": {"to": wallet.key.acc_address}}
-        tx = await wallet.create_and_sign_tx(
-                msgs=[MsgExecuteContract(wallet.key.acc_address,
-                                            contract=Anchor.Address["mmMarket"],
-                                            execute_msg=query)],
-                gas_prices="1uusd",
-                gas_adjustment="1.2",
-                fee_denoms=["uusd"])
+            result = await TerraChain.chain.tx.broadcast(tx)
+            if (result.is_tx_error()):
+                raise AnchorException(inspect.currentframe().f_code.co_name, result.code, result.raw_log)
 
-        result = await TerraChain.chain.tx.broadcast(tx)
-        if (result.is_tx_error()):
-            raise AnchorException(inspect.currentframe().f_code.co_name, result.code, result.raw_log)
-
+        except LCDResponseError as e:
+            Anchor.log.exception(e)
+            raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)
 
 
     async def get_total_deposit_amount(wallet_address):
@@ -260,9 +283,7 @@ class Anchor():
             response = await TerraChain.chain.wasm.contract_query(Anchor.Address["mmMarket"], query)
             exchange_rate = float(response["exchange_rate"])
 
-            query = {"balance": {"address": wallet_address}}
-            response = await TerraChain.chain.wasm.contract_query(Anchor.Address["aterra_contract"], query)
-            balance = float(response["balance"])
+            balance = await Anchor.get_balance_on_earn(wallet_address)
 
             total_deposit = exchange_rate * balance
 
@@ -271,13 +292,22 @@ class Anchor():
             Anchor.log.exception(e)
             raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)
             
-        except Exception as e:
-            raise AnchorException(inspect.currentframe().f_code.co_name, type(e).__name__, e.args[0] if e.args[0] else "")
-
 
         return total_deposit
 
+    async def get_balance_on_earn(wallet_address):
+        balance = 0
+        try:
+            query = {"balance": {"address": wallet_address}}
+            response = await TerraChain.chain.wasm.contract_query(Anchor.Address["aterra_contract"], query)
+            balance = float(response["balance"])
 
+        except LCDResponseError as e:
+            Anchor.log.exception(e)
+            raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)
+            
+
+        return balance
 
     async def get_earn_apy():
         earn_apy = None
@@ -290,9 +320,11 @@ class Anchor():
             earn_apy = round(deposit_rate * BLOCKS_PER_YEAR * 100,2)
 
 
-        except Exception as e:
+        except LCDResponseError as e:
             Anchor.log.exception(e)
-            earn_apy = None
+            raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)
+            
+
 
         return earn_apy
 
@@ -329,9 +361,13 @@ class Anchor():
 
 
 
-        except Exception as e:
+        except LCDResponseError as e:
             Anchor.log.exception(e)
-            borrow_apy = None
+            raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)
+            
+
 
         return borrow_apy
+
+
 
