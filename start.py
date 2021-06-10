@@ -42,9 +42,8 @@ class Main():
             await self.check_if_enough_ust_for_fees()
             await asyncio.gather(
                 bot_telegram.start(), 
-                self._loop_check_borrow.start())
-            # await asyncio.gather(
-            #     bot_telegram.start())
+                self._loop_check_borrow.start()
+            )
 
         except Exception as e:
             Config._log.exception(e)
@@ -52,8 +51,10 @@ class Main():
 
     async def stop(self):
         try:
-            await bot_telegram.stop()
-            # await self._loop_check_borrow.stop()
+            asyncio.gather(
+                bot_telegram.stop(),
+                self._loop_check_borrow.stop()
+            )
 
         except Exception as e:
             Config._log.exception(e)
@@ -150,7 +151,7 @@ class Main():
         error_occured = False
         try:
             await self.check_if_enough_ust_for_fees()
-            await bot_telegram.send_message("Sets the TVL to the target value ...", show_keyboard=False, show_typing=True)
+            await bot_telegram.send_message("Sets TVL to <code>{}%</code> ...".format(Config._target_tvl), show_keyboard=False, show_typing=True)
             wallet_address = self._wallet.get_wallet_address()
             current_tvl = await Anchor.get_current_tvl(wallet_address)
             if (current_tvl is not None):
@@ -165,7 +166,6 @@ class Main():
                 elif (current_tvl < Config._target_tvl):
                     # do borrow
                     amount_to_borrow = await Anchor.get_amount_to_borrow(wallet_address, Config._target_tvl)
-                    # await bot_telegram.send_message("Borrowing <code>{}$</code> and deposit it on earn ...".format(Helper.to_human_value(amount_to_borrow)), False)
                     await bot_telegram.send_message("Needs to borrow to reach TVL ...", show_keyboard=False, show_typing=True)                
                     await self.do_borrow_and_deposit(self._wallet, amount_to_borrow)
             else:
