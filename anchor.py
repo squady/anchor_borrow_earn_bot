@@ -2,6 +2,7 @@ import requests
 import inspect
 from terra_sdk.core.wasm.msgs import MsgExecuteContract
 from terra_sdk.core.coins import Coins
+from terra_sdk.core.strings import AccAddress
 from terra_sdk.core.wasm.msgs import dict_to_b64
 from terra_sdk.exceptions import LCDResponseError
 from aiogram.utils.markdown import quote_html
@@ -153,14 +154,8 @@ class Anchor():
 
         return amount_to_borrow
 
-
-    async def do_repay_amount(wallet, amount_to_repay):
+    async def do_trx(wallet, msgs):
         try:
-            query = {"repay_stable": {}}
-            msgs = [MsgExecuteContract(wallet.key.acc_address,
-                                                contract=Config._address["mmMarket"],
-                                                execute_msg=query,
-                                                coins=Coins(uusd=amount_to_repay))]
             tx = await wallet.create_and_sign_tx(msgs=msgs)
 
             estimated_fees = await TerraChain.estimate_fee(tx)
@@ -169,46 +164,42 @@ class Anchor():
             result = await TerraChain.chain.tx.broadcast(tx)
             if (result.is_tx_error()):
                 raise AnchorException(inspect.currentframe().f_code.co_name, result.code, result.raw_log)
+
+        except LCDResponseError as e:
+            Config._log.exception(e)
+            raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)   
+            
+    async def get_repay_amount_msg(wallet_address, amount_to_repay):
+        try:
+            query = {"repay_stable": {}}
+            return MsgExecuteContract(AccAddress(wallet_address),
+                                                contract=Config._address["mmMarket"],
+                                                execute_msg=query,
+                                                coins=Coins(uusd=amount_to_repay))
 
         except LCDResponseError as e:
             Config._log.exception(e)
             raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)            
 
-    async def do_borrow_amount(wallet, amount_to_borrow):
+    async def get_borrow_amount_msg(wallet_address, amount_to_borrow):
         try:
 
-            query = {"borrow_stable": {"borrow_amount": str(amount_to_borrow), "to": wallet.key.acc_address}}
-            msgs = [MsgExecuteContract(wallet.key.acc_address,
+            query = {"borrow_stable": {"borrow_amount": str(amount_to_borrow), "to": wallet_address}}
+            return MsgExecuteContract(AccAddress(wallet_address),
                                                 contract=Config._address["mmMarket"],
-                                                execute_msg=query)]
-            tx = await wallet.create_and_sign_tx(msgs=msgs)
-
-            estimated_fees = await TerraChain.estimate_fee(tx)
-            tx = await wallet.create_and_sign_tx(msgs=msgs, fee=estimated_fees)
-
-            result = await TerraChain.chain.tx.broadcast(tx)
-            if (result.is_tx_error()):
-                raise AnchorException(inspect.currentframe().f_code.co_name, result.code, result.raw_log)
+                                                execute_msg=query)
 
         except LCDResponseError as e:
             Config._log.exception(e)
             raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)
 
-    async def do_withdraw_from_earn(wallet, amount_to_withdraw):
+    async def get_withdraw_from_earn_msg(wallet_address, amount_to_withdraw):
         try:
             b64 = dict_to_b64({"redeem_stable": {}})
             msg = {"send": {"contract": str(Config._address["mmMarket"]),"amount": str(amount_to_withdraw), "msg": b64}}
-            msgs = [MsgExecuteContract(wallet.key.acc_address,
+            return MsgExecuteContract(AccAddress(wallet_address),
                                                 contract=Config._address["aterra_contract"],
-                                                execute_msg=msg)]
-            tx = await wallet.create_and_sign_tx(msgs=msgs)
-
-            estimated_fees = await TerraChain.estimate_fee(tx)
-            tx = await wallet.create_and_sign_tx(msgs=msgs, fee=estimated_fees)
-            result = await TerraChain.chain.tx.broadcast(tx)
-            if (result.is_tx_error()):
-                raise AnchorException(inspect.currentframe().f_code.co_name,result.code, result.raw_log)
-
+                                                execute_msg=msg)
 
         except LCDResponseError as e:
             Config._log.exception(e)
@@ -218,39 +209,24 @@ class Anchor():
             
 
 
-    async def do_deposit_to_earn(wallet, amount_to_deposit):
+    async def get_deposit_to_earn_msg(wallet_address, amount_to_deposit):
         try:
             query = {"deposit_stable": {}}
-            msgs = [MsgExecuteContract(wallet.key.acc_address,
+            return MsgExecuteContract(AccAddress(wallet_address),
                                             contract=Config._address["mmMarket"],
                                             execute_msg=query,
-                                            coins=Coins(uusd=amount_to_deposit))]
-            tx = await wallet.create_and_sign_tx(msgs=msgs)
-
-            estimated_fees = await TerraChain.estimate_fee(tx)
-            tx = await wallet.create_and_sign_tx(msgs=msgs, fee=estimated_fees)
-            result = await TerraChain.chain.tx.broadcast(tx)
-            if (result.is_tx_error()):
-                raise AnchorException(inspect.currentframe().f_code.co_name,result.code, result.raw_log)
+                                            coins=Coins(uusd=amount_to_deposit))
 
         except LCDResponseError as e:
             Config._log.exception(e)
             raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)
 
-    async def do_claim_anc_rewards(wallet):
+    async def get_claim_anc_rewards_msg(wallet_address):
         try:
-            query = {"claim_rewards": {"to": wallet.key.acc_address}}
-            msgs = [MsgExecuteContract(wallet.key.acc_address,
+            query = {"claim_rewards": {"to": wallet_address}}
+            return MsgExecuteContract(AccAddress(wallet_address),
                                                 contract=Config._address["mmMarket"],
-                                                execute_msg=query)]
-            tx = await wallet.create_and_sign_tx(msgs=msgs)
-
-            estimated_fees = await TerraChain.estimate_fee(tx)
-            tx = await wallet.create_and_sign_tx(msgs=msgs, fee=estimated_fees)
-
-            result = await TerraChain.chain.tx.broadcast(tx)
-            if (result.is_tx_error()):
-                raise AnchorException(inspect.currentframe().f_code.co_name, result.code, result.raw_log)
+                                                execute_msg=query)
 
         except LCDResponseError as e:
             Config._log.exception(e)
