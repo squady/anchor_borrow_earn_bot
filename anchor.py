@@ -1,12 +1,10 @@
 import requests
 import inspect
-
 from terra_sdk.core.wasm.msgs import MsgExecuteContract
 from terra_sdk.core.coins import Coins
 from terra_sdk.core.wasm.msgs import dict_to_b64
 from terra_sdk.exceptions import LCDResponseError
 from aiogram.utils.markdown import quote_html
-
 from terra_chain import TerraChain
 from config import Config
 
@@ -159,15 +157,14 @@ class Anchor():
     async def do_repay_amount(wallet, amount_to_repay):
         try:
             query = {"repay_stable": {}}
-            tx = await wallet.create_and_sign_tx(
-                    msgs=[MsgExecuteContract(wallet.key.acc_address,
+            msgs = [MsgExecuteContract(wallet.key.acc_address,
                                                 contract=Config._address["mmMarket"],
                                                 execute_msg=query,
-                                                coins=Coins(uusd=amount_to_repay))],
-                    gas_prices="1uusd",
-                    gas_adjustment="1.2",
-                    fee_denoms=["uusd"])
+                                                coins=Coins(uusd=amount_to_repay))]
+            tx = await wallet.create_and_sign_tx(msgs=msgs)
 
+            estimated_fees = await TerraChain.estimate_fee(tx)
+            tx = await wallet.create_and_sign_tx(msgs=msgs, fee=estimated_fees)
 
             result = await TerraChain.chain.tx.broadcast(tx)
             if (result.is_tx_error()):
@@ -181,13 +178,13 @@ class Anchor():
         try:
 
             query = {"borrow_stable": {"borrow_amount": str(amount_to_borrow), "to": wallet.key.acc_address}}
-            tx = await wallet.create_and_sign_tx(
-                    msgs=[MsgExecuteContract(wallet.key.acc_address,
+            msgs = [MsgExecuteContract(wallet.key.acc_address,
                                                 contract=Config._address["mmMarket"],
-                                                execute_msg=query)],
-                    gas_prices="1uusd",
-                    gas_adjustment="1.2",
-                    fee_denoms=["uusd"])
+                                                execute_msg=query)]
+            tx = await wallet.create_and_sign_tx(msgs=msgs)
+
+            estimated_fees = await TerraChain.estimate_fee(tx)
+            tx = await wallet.create_and_sign_tx(msgs=msgs, fee=estimated_fees)
 
             result = await TerraChain.chain.tx.broadcast(tx)
             if (result.is_tx_error()):
@@ -201,14 +198,13 @@ class Anchor():
         try:
             b64 = dict_to_b64({"redeem_stable": {}})
             msg = {"send": {"contract": str(Config._address["mmMarket"]),"amount": str(amount_to_withdraw), "msg": b64}}
-            tx = await wallet.create_and_sign_tx(
-                    msgs=[MsgExecuteContract(wallet.key.acc_address,
+            msgs = [MsgExecuteContract(wallet.key.acc_address,
                                                 contract=Config._address["aterra_contract"],
-                                                execute_msg=msg)],
-                    gas_prices="1uusd",
-                    gas_adjustment="1.2",
-                    fee_denoms=["uusd"])
+                                                execute_msg=msg)]
+            tx = await wallet.create_and_sign_tx(msgs=msgs)
 
+            estimated_fees = await TerraChain.estimate_fee(tx)
+            tx = await wallet.create_and_sign_tx(msgs=msgs, fee=estimated_fees)
             result = await TerraChain.chain.tx.broadcast(tx)
             if (result.is_tx_error()):
                 raise AnchorException(inspect.currentframe().f_code.co_name,result.code, result.raw_log)
@@ -225,16 +221,14 @@ class Anchor():
     async def do_deposit_to_earn(wallet, amount_to_deposit):
         try:
             query = {"deposit_stable": {}}
-            tx = await wallet.create_and_sign_tx(
-                    msgs=[MsgExecuteContract(wallet.key.acc_address,
+            msgs = [MsgExecuteContract(wallet.key.acc_address,
                                             contract=Config._address["mmMarket"],
                                             execute_msg=query,
-                                            coins=Coins(uusd=amount_to_deposit))],
-                    gas_prices="1uusd",
-                    gas_adjustment="1.2",
-                    fee_denoms=["uusd"])
+                                            coins=Coins(uusd=amount_to_deposit))]
+            tx = await wallet.create_and_sign_tx(msgs=msgs)
 
-
+            estimated_fees = await TerraChain.estimate_fee(tx)
+            tx = await wallet.create_and_sign_tx(msgs=msgs, fee=estimated_fees)
             result = await TerraChain.chain.tx.broadcast(tx)
             if (result.is_tx_error()):
                 raise AnchorException(inspect.currentframe().f_code.co_name,result.code, result.raw_log)
@@ -246,13 +240,13 @@ class Anchor():
     async def do_claim_anc_rewards(wallet):
         try:
             query = {"claim_rewards": {"to": wallet.key.acc_address}}
-            tx = await wallet.create_and_sign_tx(
-                    msgs=[MsgExecuteContract(wallet.key.acc_address,
+            msgs = [MsgExecuteContract(wallet.key.acc_address,
                                                 contract=Config._address["mmMarket"],
-                                                execute_msg=query)],
-                    gas_prices="1uusd",
-                    gas_adjustment="1.2",
-                    fee_denoms=["uusd"])
+                                                execute_msg=query)]
+            tx = await wallet.create_and_sign_tx(msgs=msgs)
+
+            estimated_fees = await TerraChain.estimate_fee(tx)
+            tx = await wallet.create_and_sign_tx(msgs=msgs, fee=estimated_fees)
 
             result = await TerraChain.chain.tx.broadcast(tx)
             if (result.is_tx_error()):
