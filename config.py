@@ -2,7 +2,6 @@ import os
 import sys
 import logging
 import base64
-from helper import Helper
 
 
 class Config:

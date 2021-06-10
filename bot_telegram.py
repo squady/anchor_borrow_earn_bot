@@ -13,22 +13,22 @@ from config import Config
 
 
 
-BORROW_INFOS="🌔 Borrow infos"
-EARN_INFOS="🌜 Earn infos"
+BORROW_INFOS="💱 Borrow infos"
+EARN_INFOS="💰 Earn infos"
 WALLET_INFOS="👛 Wallet infos"
-CHANGE_TARGET_TVL="✏️ Target TVL 🟩..."
-CHANGE_MIN_TVL="✏️ Min TVL 🟧..."
-CHANGE_MAX_TVL="✏️ Max TVL 🟥..."
-CLAIM_REWARDS="Claim rewards"
-DEPOSIT_AMOUNT="Deposit Amount..."
-FETCH_TVL="🎯 Fetch TVL"
+CHANGE_TARGET_TVL="✏️ Target TVL 🟩"
+CHANGE_MIN_TVL="✏️ Min TVL 🟧"
+CHANGE_MAX_TVL="✏️ Max TVL 🟥"
+CLAIM_REWARDS="🎁 Claim rewards"
+DEPOSIT_AMOUNT="💵 Deposit Amount"
+FETCH_TVL="🎯 Reach the Target TVL"
 
 
 class Form(StatesGroup):
     change_target_tvl = State()
     change_min_tvl = State()
     change_max_tvl = State()
-    fetch_tvl = State()
+    reach_tvl = State()
     claim_rewards = State()
     deposit_amount = State()
     confirm = State()
@@ -72,7 +72,7 @@ async def get_wallet_infos(message: types.Message):
 
 @dp.message_handler(lambda message: message.text and FETCH_TVL in message.text and message.chat.id == Config._telegram_chat_id)
 async def get_wallet_infos(message: types.Message, state: FSMContext):
-    await state.set_data({"from":Form.fetch_tvl.state})
+    await state.set_data({"from":Form.reach_tvl.state})
     await ask_to_confirm(message, state)
 
 
@@ -202,7 +202,7 @@ async def confirm_callback(message: types.Message, state: FSMContext):
             form_from = datas.get("from", None)
             if (form_from is not None):
                 # FETCH TVL
-                if (form_from == Form.fetch_tvl.state):
+                if (form_from == Form.reach_tvl.state):
                     await events.async_set(Action.FETCH_TVL)
                 # CHANGE_TVL
                 elif (form_from == Form.change_target_tvl.state or
