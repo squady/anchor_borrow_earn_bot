@@ -1,11 +1,11 @@
+from config import Config
 import os
-
 from terra_sdk.client.lcd import AsyncLCDClient
 
 
 
 
 class TerraChain:
-    chain = AsyncLCDClient(chain_id=os.environ.get("CHAIN_ID", "tequila-0004"), 
-                            url=os.environ.get("CHAIN_URL", "https://tequila-lcd.terra.dev"))
+    chain = AsyncLCDClient(chain_id=Config._chain_id, 
+                            url=Config._chain_url)
 
