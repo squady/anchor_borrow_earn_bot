@@ -8,6 +8,7 @@ ADD anchor.py /app/
 ADD bot_telegram.py /app/
 ADD helper.py /app/
 ADD looper.py /app/
+ADD config.py /app/
 ADD Observable.py /app/
 ADD start.py /app/
 ADD terra_chain.py /app/
