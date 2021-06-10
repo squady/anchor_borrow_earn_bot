@@ -132,7 +132,8 @@ class Main():
             wallet_address = self._wallet.get_wallet_address()
             uusd_amount = await self._wallet.get_uusd_amount()
 
-            message = "<b><a href='{}'>{}</a></b>\n".format(self._wallet.get_wallet_url(), self._wallet.get_wallet_name())
+            message = "<b><a href='{}'>{}</a></b>".format(self._wallet.get_wallet_url(), self._wallet.get_wallet_name())
+            message += " (<code>v{}</code>)\n".format(Config.VERSION)
             message += "🔗 Chain id: <code>{}</code>\n".format(Config._chain_id)
             message += "🌎 Chain url: <code>{}</code>\n".format(Config._chain_url)
             message += "💴 Address: <code>{}</code>\n".format(wallet_address)

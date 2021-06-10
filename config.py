@@ -6,6 +6,7 @@ from helper import Helper
 
 
 class Config:
+    VERSION = "1.0.4"
     _log = logging.getLogger("anchor_borrow")
     formatter = logging.Formatter('%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                                     datefmt='%Y-%m-%d:%H:%M:%S')
