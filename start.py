@@ -356,12 +356,19 @@ class Main:
                 show_typing=True,
             )
 
-        await bot_telegram.send_message(
-            "Sending transactions ...",
-            show_keyboard=False,
-            show_typing=True,
-        )
-        await Anchor.do_trx(wallet._wallet, transactions)
+            await bot_telegram.send_message(
+                "Sending transactions ...",
+                show_keyboard=False,
+                show_typing=True,
+            )
+            await Anchor.do_trx(wallet._wallet, transactions)
+
+        else:
+            raise AnchorException(
+                inspect.currentframe().f_code.co_name,
+                -1,
+                "❗️ Something went wrong, because amount to repay <= 0$ ❗️",
+            )
 
     async def do_borrow_and_deposit(self, wallet, amount_to_borrow):
 
