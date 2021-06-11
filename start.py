@@ -62,6 +62,8 @@ class Main():
 
     async def get_borrow_infos(self):
         try:
+            await bot_telegram.send_message("Please wait while the bot is computing ...", show_keyboard=False, show_typing=True)
+
             await bot_telegram.show_is_typing()
             wallet_address = self._wallet.get_wallet_address()
             borrow_apy = await Anchor.get_borrow_apy()
