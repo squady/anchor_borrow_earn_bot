@@ -14,7 +14,7 @@ class TerraChain:
         fees = None
         try:
             
-            fees = await TerraChain.chain.tx.estimate_fee(tx, gas_prices="2uusd", fee_denoms=["uusd"])
+            fees     = await TerraChain.chain.tx.estimate_fee(tx, gas_prices="2uusd", fee_denoms=["uusd"])
             fees.gas = max(fees.gas, 1000000)
 
 

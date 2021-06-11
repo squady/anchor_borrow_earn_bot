@@ -8,9 +8,9 @@ from config import Config
 class TerraWallet:
     def __init__(self, wallet_name, mnemonic):
         
-        self._mnemonic = mnemonic
-        self._wallet_name = wallet_name
-        self._wallet = TerraChain.chain.wallet(MnemonicKey(self._mnemonic))
+        self._mnemonic          = mnemonic
+        self._wallet_name       = wallet_name
+        self._wallet            = TerraChain.chain.wallet(MnemonicKey(self._mnemonic))
         self._base_explorer_url = "https://finder.terra.money/{}".format(TerraChain.chain.chain_id)
 
 
@@ -26,8 +26,8 @@ class TerraWallet:
     async def get_uusd_amount(self):
         balance = 0
         try:
-            coins = await TerraChain.chain.bank.balance(self._wallet.key.acc_address)
-            coin = coins.get("uusd")
+            coins   = await TerraChain.chain.bank.balance(self._wallet.key.acc_address)
+            coin    = coins.get("uusd")
             balance = coin.amount
 
         except Exception as e:

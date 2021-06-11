@@ -26,12 +26,12 @@ FETCH_TVL="🎯 Reach the Target TVL"
 
 class Form(StatesGroup):
     change_target_tvl = State()
-    change_min_tvl = State()
-    change_max_tvl = State()
-    reach_tvl = State()
-    claim_rewards = State()
-    deposit_amount = State()
-    confirm = State()
+    change_min_tvl    = State()
+    change_max_tvl    = State()
+    reach_tvl         = State()
+    claim_rewards     = State()
+    deposit_amount    = State()
+    confirm           = State()
 
 
 class Event(Observable):
@@ -39,14 +39,16 @@ class Event(Observable):
         Observable.__init__(self)
     
 
-bot = Bot(token=Config._telegram_token, parse_mode=ParseMode.HTML)
+bot     = Bot(token=Config._telegram_token, parse_mode=ParseMode.HTML)
+storage = MemoryStorage()
+dp      = Dispatcher(bot, storage=storage)
+events  = Event()
+
 keyboard_main_menu = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
 keyboard_main_menu.add(BORROW_INFOS, EARN_INFOS, WALLET_INFOS)
 keyboard_main_menu.add(CHANGE_MIN_TVL, CHANGE_TARGET_TVL, CHANGE_MAX_TVL)
 keyboard_main_menu.add(FETCH_TVL, DEPOSIT_AMOUNT, CLAIM_REWARDS)
-storage = MemoryStorage()
-dp = Dispatcher(bot, storage=storage)
-events = Event()
+
 
 
 
@@ -82,9 +84,7 @@ async def get_change_target_tvl(message: types.Message, state: FSMContext):
 
         await Form.change_target_tvl.set()                
         await state.set_data({"from":Form.change_target_tvl.state, "type_tvl":TVL_TYPE.TARGET})
-                
-        fr_markeup = force_reply.ForceReply()
-        await message.reply("Please set the new value :", reply=True, reply_markup=fr_markeup)
+        await message.reply("Please set the new value :", reply=True, reply_markup=force_reply.ForceReply())
 
     except Exception as e:
         Config._log.exception(e)
@@ -95,9 +95,7 @@ async def get_change_min_tvl(message: types.Message, state: FSMContext):
 
         await Form.change_min_tvl.set()                
         await state.set_data({"from":Form.change_min_tvl.state, "type_tvl":TVL_TYPE.MIN})
-                
-        fr_markeup = force_reply.ForceReply()
-        await message.reply("Please set the new value :", reply=True, reply_markup=fr_markeup)
+        await message.reply("Please set the new value :", reply=True, reply_markup=force_reply.ForceReply())
 
     except Exception as e:
         Config._log.exception(e)
@@ -108,9 +106,7 @@ async def get_change_max_tvl(message: types.Message, state: FSMContext):
 
         await Form.change_max_tvl.set()                
         await state.set_data({"from":Form.change_max_tvl.state, "type_tvl":TVL_TYPE.MAX})
-                
-        fr_markeup = force_reply.ForceReply()
-        await message.reply("Please set the new value :", reply=True, reply_markup=fr_markeup)
+        await message.reply("Please set the new value :", reply=True, reply_markup=force_reply.ForceReply())
 
     except Exception as e:
         Config._log.exception(e)        
@@ -143,9 +139,7 @@ async def get_deposit_amount(message: types.Message, state: FSMContext):
     try:
 
         await Form.deposit_amount.set()    
-
-        fr_markeup = force_reply.ForceReply()
-        await message.reply("Please set amount to deposit :", reply=True, reply_markup=fr_markeup)
+        await message.reply("Please set amount to deposit :", reply=True, reply_markup=force_reply.ForceReply())
 
     except Exception as e:
         Config._log.exception(e)    
@@ -175,8 +169,6 @@ async def get_claim_rewards(message: types.Message, state: FSMContext):
 
     except Exception as e:
         Config._log.exception(e)
-
-
 
 
 
