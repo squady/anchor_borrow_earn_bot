@@ -16,7 +16,6 @@ class Looper(Observable):
         self._stopped_evt = asyncio.Event()
         self._is_running = False
 
-
     async def start(self):
         try:
             self._do_stop_evt.clear()
@@ -30,16 +29,13 @@ class Looper(Observable):
 
     async def stop(self):
         try:
-            if (self._is_running == True):
+            if self._is_running == True:
                 self._do_stop_evt.set()
                 await self._stopped_evt.wait()
                 self._is_running = False
 
-
         except Exception as e:
-            Config._log.exception(e)        
-
-
+            Config._log.exception(e)
 
     async def loop(self):
         try:
@@ -53,6 +49,4 @@ class Looper(Observable):
             Config._log.exception(e)
         finally:
             self._stopped_evt.set()
-            self._is_running = False            
-
-
+            self._is_running = False

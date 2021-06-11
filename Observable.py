@@ -12,7 +12,7 @@ class Observable(object):
         await self.async_notifyObservers(event_name, **kwargs)
 
     def addObserver(self, o, event_name, callback):
-        if (o not in self.observers):
+        if o not in self.observers:
             self.observers[o] = {}
 
         self.observers[o][event_name] = callback
