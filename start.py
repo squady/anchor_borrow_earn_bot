@@ -308,7 +308,7 @@ class Main:
                         show_keyboard=False,
                         show_typing=True,
                     )
-                    amount_to_repay = await wallet.get_uusd_amount()
+                    amount_to_repay = uusd_amount_in_wallet + earn_balance
                     amount_to_repay = max(
                         amount_to_repay - Helper.to_terra_value(20),
                         0,
@@ -336,12 +336,12 @@ class Main:
                 )
                 await bot_telegram.send_message(
                     "Need to withdraw <code>{}$</code> from earn.".format(
-                        Helper.to_human_value(earn_balance)
+                        Helper.to_human_value(amount_to_withdraw)
                     ),
                     show_keyboard=False,
                     show_typing=True,
                 )
-                amount_to_repay = await wallet.get_uusd_amount()
+                amount_to_repay = uusd_amount_in_wallet + amount_to_withdraw
                 amount_to_repay = max(amount_to_repay - Helper.to_terra_value(20), 0)
 
         if amount_to_repay > 0:
@@ -365,7 +365,7 @@ class Main:
 
     async def do_borrow_and_deposit(self, wallet, amount_to_borrow):
 
-        msgs = []
+        transactions = []
         wallet_address = wallet.get_wallet_address()
         await bot_telegram.send_message(
             "Need to borrow <code>{}$</code>.".format(
@@ -374,7 +374,7 @@ class Main:
             show_keyboard=False,
             show_typing=True,
         )
-        msgs.append(
+        transactions.append(
             await Anchor.get_borrow_amount_msg(wallet_address, amount_to_borrow)
         )
         await bot_telegram.send_message(
@@ -384,7 +384,7 @@ class Main:
             show_keyboard=False,
             show_typing=True,
         )
-        msgs.append(
+        transactions.append(
             await Anchor.get_deposit_to_earn_msg(wallet_address, amount_to_borrow)
         )
 
@@ -393,7 +393,7 @@ class Main:
             show_keyboard=False,
             show_typing=True,
         )
-        await Anchor.do_trx(wallet._wallet, msgs)
+        await Anchor.do_trx(wallet._wallet, transactions)
 
     async def change_tvl(self, **kwargs):
         try:
