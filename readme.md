@@ -19,6 +19,7 @@ MAX_TVL=40
 MIN_TVL=30
 TELEGRAM_TOKEN=<TELEGRAM_ID>
 TELEGRAM_CHAT_ID=<OWNER_CHAT_ID>
+UST_MIN_AMOUNT_ALERT=10
 ```
 **WALLET_MNEMONIC**
 > this is the base64 encoded mnemonic phrase of your wallet, dont share it !!
@@ -62,6 +63,9 @@ TELEGRAM_CHAT_ID=<OWNER_CHAT_ID>
 **TELEGRAM_CHAT_ID**
 > As it's not a public bot, set your chat id so that it can only chat with you
 
+**UST_MIN_AMOUNT_ALERT**
+> threshold below which the bot sends an alert to warn about low usd in the wallet
+
 
 
 
@@ -101,7 +105,7 @@ then \
 ![image](./imgs/earn_infos.png)
 
 ## Show your wallet infos
-- wallet name
+- wallet name : (Bot version)
 - chain id
 - chain url
 - wallet address
