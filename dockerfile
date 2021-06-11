@@ -2,7 +2,6 @@ FROM python:3.9
 
 WORKDIR /app/
 
-ADD .env /app/
 ADD action.py /app/
 ADD anchor.py /app/
 ADD bot_telegram.py /app/

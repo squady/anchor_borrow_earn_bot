@@ -8,3 +8,16 @@ services:
         ./
     restart: unless-stopped
     container_name: anchor_bot
+    environment: 
+      - WALLET_MNEMONIC=${WALLET_MNEMONIC}
+      - WALLET_NAME=${WALLET_NAME}
+      - CHAIN_ID=${CHAIN_ID}
+      - CHAIN_URL=${CHAIN_URL}
+      - ANCHOR_mmMarket=${ANCHOR_mmMarket}
+      - Mantle_endpoint=${Mantle_endpoint}
+      - TARGET_TVL=${TARGET_TVL}
+      - MAX_TVL=${MAX_TVL}
+      - MIN_TVL=${MIN_TVL}
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - UST_MIN_AMOUNT_ALERT=${UST_MIN_AMOUNT_ALERT}
