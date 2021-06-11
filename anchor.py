@@ -43,7 +43,8 @@ class Anchor:
                 query,
             )
             for val in response:
-                Config._address[val] = response[val]
+                if ("terra" in response[val]):
+                    Config._address[val] = response[val]
 
         except LCDResponseError as e:
             Config._log.exception(e)
