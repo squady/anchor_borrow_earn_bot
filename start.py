@@ -1,3 +1,4 @@
+from terra_chain import TerraChain
 from helper import Helper
 from dotenv import load_dotenv
 
@@ -185,7 +186,7 @@ class Main:
             Config._log.exception(e)
 
     async def do_reach_target_tvl(self):
-        error_occured = False
+        trxhash = None
         try:
             await self.check_if_enough_ust_for_fees()
             wallet_address = self._wallet.get_wallet_address()
@@ -209,7 +210,7 @@ class Main:
                     amount_to_repay = await Anchor.get_amount_to_repay(
                         wallet_address, Config._target_tvl
                     )
-                    await self.do_withdraw_if_needed_and_repay(
+                    trxhash = await self.do_withdraw_if_needed_and_repay(
                         self._wallet, int(amount_to_repay)
                     )
 
@@ -218,7 +219,7 @@ class Main:
                     amount_to_borrow = await Anchor.get_amount_to_borrow(
                         wallet_address, Config._target_tvl
                     )
-                    await self.do_borrow_and_deposit(self._wallet, amount_to_borrow)
+                    trxhash = await self.do_borrow_and_deposit(self._wallet, amount_to_borrow)
             else:
                 raise AnchorException(
                     inspect.currentframe().f_code.co_name,
@@ -227,21 +228,16 @@ class Main:
                 )
 
         except AnchorException as e:
-            error_occured = True
             Config._log.exception(e)
             await bot_telegram.send_message(
                 e.to_telegram_str(), show_keyboard=False, show_typing=True
             )
 
         except Exception as e:
-            error_occured = True
             Config._log.exception(e)
 
         finally:
-            if error_occured == True:
-                await bot_telegram.send_message("🔴 Ended with errors.")
-            else:
-                await bot_telegram.send_message("🟢 Done.")
+            await self.handle_result(trxhash)
 
     async def do_check_borrow(self):
         try:
@@ -361,7 +357,7 @@ class Main:
                 show_keyboard=False,
                 show_typing=True,
             )
-            await Anchor.do_trx(wallet._wallet, transactions)
+            return await Anchor.do_trx(wallet._wallet, transactions)
 
         else:
             raise AnchorException(
@@ -400,7 +396,7 @@ class Main:
             show_keyboard=False,
             show_typing=True,
         )
-        await Anchor.do_trx(wallet._wallet, transactions)
+        return await Anchor.do_trx(wallet._wallet, transactions)
 
     async def change_tvl(self, **kwargs):
         try:
@@ -481,7 +477,7 @@ class Main:
             Config._log.exception(e)
 
     async def set_deposit_amount(self, **kwargs):
-        error_occured = False
+        trxhash = None
         try:
             wallet_address = self._wallet.get_wallet_address()
             await self.check_if_enough_ust_for_fees()
@@ -495,7 +491,6 @@ class Main:
             uusd_amount = await self._wallet.get_uusd_amount()
             uusd_amount = uusd_amount - Helper.to_terra_value(20)
             if amount_to_deposit > uusd_amount:
-                error_occured = True
                 await bot_telegram.send_message(
                     "Unable to deposit, not enough liquidity"
                 )
@@ -505,7 +500,7 @@ class Main:
                     show_keyboard=False,
                     show_typing=True,
                 )
-                await Anchor.do_trx(
+                trxhash = await Anchor.do_trx(
                     self._wallet._wallet,
                     [
                         await Anchor.get_deposit_to_earn_msg(
@@ -516,7 +511,6 @@ class Main:
                 )
 
         except AnchorException as e:
-            error_occured = True
             Config._log.exception(e)
             await bot_telegram.send_message(
                 e.to_telegram_str(),
@@ -525,16 +519,12 @@ class Main:
             )
 
         except Exception as e:
-            error_occured = True
             Config._log.exception(e)
         finally:
-            if error_occured == True:
-                await bot_telegram.send_message("🔴 Ended with errors.")
-            else:
-                await bot_telegram.send_message("🟢 Done.")
+            await self.handle_result(trxhash)
 
     async def claim_rewards(self, **kwargs):
-        error_occured = False
+        trxhash = None    
         try:
             await self.check_if_enough_ust_for_fees()
             amount_rewards = await Anchor.get_pending_rewards(
@@ -553,7 +543,7 @@ class Main:
                     show_keyboard=False,
                     show_typing=True,
                 )
-                await Anchor.do_trx(
+                trxhash = await Anchor.do_trx(
                     self._wallet._wallet,
                     [
                         await Anchor.get_claim_anc_rewards_msg(
@@ -569,7 +559,6 @@ class Main:
                 )
 
         except AnchorException as e:
-            error_occured = True
             Config._log.exception(e)
             await bot_telegram.send_message(
                 e.to_telegram_str(),
@@ -578,13 +567,9 @@ class Main:
             )
 
         except Exception as e:
-            error_occured = True
             Config._log.exception(e)
         finally:
-            if error_occured == True:
-                await bot_telegram.send_message("🔴 Ended with errors.")
-            else:
-                await bot_telegram.send_message("🟢 Done.")
+            await self.handle_result(trxhash)
 
     async def check_if_enough_ust_for_fees(self):
         try:
@@ -596,6 +581,22 @@ class Main:
                         uusd_amount
                     )
                 )
+
+        except Exception as e:
+            Config._log.exception(e)
+
+
+
+    async def handle_result(self, trxhash):
+        try:
+
+            if trxhash == None:
+                await bot_telegram.send_message("🔴 Ended with errors.")
+            else:
+                await bot_telegram.send_message(
+                    "🟢 Done [<a href='{}'>link</a>].".format(TerraChain.get_trx_url(trxhash))
+                )
+
 
         except Exception as e:
             Config._log.exception(e)

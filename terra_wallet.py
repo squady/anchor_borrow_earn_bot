@@ -10,8 +10,9 @@ class TerraWallet:
         self._mnemonic = mnemonic
         self._wallet_name = wallet_name
         self._wallet = TerraChain.chain.wallet(MnemonicKey(self._mnemonic))
-        self._base_explorer_url = "https://finder.terra.money/{}".format(
-            TerraChain.chain.chain_id
+        self._base_explorer_url = "{}/{}".format(
+            Config._finder_base_url,
+            TerraChain.chain.chain_id,
         )
 
     def get_wallet_name(self):

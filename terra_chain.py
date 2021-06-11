@@ -20,3 +20,15 @@ class TerraChain:
             fees = None
 
         return fees
+
+    @staticmethod
+    def get_trx_url(txhash):
+        try:
+            return "{}/{}/tx/{}".format(
+                Config._finder_base_url,
+                TerraChain.chain.chain_id,
+                txhash,
+            )
+
+        except Exception as e:
+            Config._log.exception(e)

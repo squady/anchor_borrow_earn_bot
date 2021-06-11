@@ -191,10 +191,14 @@ class Anchor:
         return amount_to_borrow
 
     async def do_trx(wallet, msgs):
+        trxhash = None
         try:
             tx = await wallet.create_and_sign_tx(msgs=msgs)
             estimated_fees = await TerraChain.estimate_fee(tx)
-            tx = await wallet.create_and_sign_tx(msgs=msgs, fee=estimated_fees)
+            tx = await wallet.create_and_sign_tx(
+                msgs=msgs,
+                fee=estimated_fees,
+            )
             result = await TerraChain.chain.tx.broadcast(tx)
             if result.is_tx_error():
                 raise AnchorException(
@@ -202,6 +206,7 @@ class Anchor:
                     result.code,
                     result.raw_log,
                 )
+            trxhash = result.txhash
 
         except LCDResponseError as e:
             Config._log.exception(e)
@@ -210,6 +215,7 @@ class Anchor:
                 e.errno if e.errno else -1,
                 e.message,
             )
+        return trxhash
 
     async def get_repay_amount_msg(wallet_address, amount_to_repay):
         try:

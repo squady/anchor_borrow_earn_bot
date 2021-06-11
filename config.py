@@ -44,6 +44,8 @@ class Config:
 
     BLOCKS_PER_YEAR = 4906443
 
+    _finder_base_url = "https://finder.terra.money"
+
     _log.info("===========================================")
     _log.info("wallet_name = {}".format(_wallet_name))
     _log.info("chain_id = {}".format(_chain_id))
