@@ -164,3 +164,7 @@ The bot will claim rewards for you
 ![image](./imgs/rewards.png)
 
 
+## contact
+If you have any questions or remarks, you can contact me on telegram.
+Tell me right away that you are contacting me about the bot so that I don't block you by reflex (a lot of scam on tg)
+telegram contact : @Rambogosse
