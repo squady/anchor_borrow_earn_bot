@@ -59,7 +59,9 @@ class Main:
 
     async def start(self):
         try:
-            await Anchor.get_config()
+            await Anchor.get_config(Config._address["mmCustody"])
+            await Anchor.get_config(Config._address["market_contract"])
+            await Anchor.get_config(Config._address["overseer_contract"])
             await self.check_if_enough_ust_for_fees()
             await asyncio.gather(
                 bot_telegram.start(),
@@ -92,6 +94,12 @@ class Main:
             borrow_apy = await Anchor.get_borrow_apy()
             borrow_value = await Anchor.get_borrow_value(wallet_address)
             borrow_limit = await Anchor.get_borrow_limit(wallet_address)
+            bluna_amount = await Anchor.get_bluna_amount(wallet_address)
+            bluna_price = round(await Anchor.get_bluna_price(), 2)
+            liquidation_price = round(
+                (borrow_value * 2) / bluna_amount,
+                2,
+            )
             if borrow_value != 0 and borrow_limit != 0:
                 current_tvl = await Anchor.get_current_tvl(
                     wallet_address, borrow_value, borrow_limit
@@ -111,6 +119,8 @@ class Main:
                 message += "🟢 Target TVL: <code>{}%</code>\n".format(Config._target_tvl)
                 message += "🔴 Max TVL: <code>{}%</code>\n".format(Config._max_tvl)
                 message += "🟠 Min TVL: <code>{}%</code>\n".format(Config._min_tvl)
+                message += "🌖 bLuna price: <code>{}$</code>\n".format(bluna_price)
+                message += "☠️ Liquidation price: <code>{}$</code>\n".format(liquidation_price)
                 message += "💴 Borrowed: <code>{}$</code>\n".format(
                     Helper.to_human_value(borrow_value)
                 )
@@ -219,7 +229,9 @@ class Main:
                     amount_to_borrow = await Anchor.get_amount_to_borrow(
                         wallet_address, Config._target_tvl
                     )
-                    trxhash = await self.do_borrow_and_deposit(self._wallet, amount_to_borrow)
+                    trxhash = await self.do_borrow_and_deposit(
+                        self._wallet, amount_to_borrow
+                    )
             else:
                 raise AnchorException(
                     inspect.currentframe().f_code.co_name,
@@ -524,7 +536,7 @@ class Main:
             await self.handle_result(trxhash)
 
     async def claim_rewards(self, **kwargs):
-        trxhash = None    
+        trxhash = None
         try:
             await self.check_if_enough_ust_for_fees()
             amount_rewards = await Anchor.get_pending_rewards(
@@ -585,8 +597,6 @@ class Main:
         except Exception as e:
             Config._log.exception(e)
 
-
-
     async def handle_result(self, trxhash):
         try:
 
@@ -594,9 +604,10 @@ class Main:
                 await bot_telegram.send_message("🔴 Ended with errors.")
             else:
                 await bot_telegram.send_message(
-                    "🟢 Done [<a href='{}'>link</a>].".format(TerraChain.get_trx_url(trxhash))
+                    "🟢 Done [<a href='{}'>link</a>].".format(
+                        TerraChain.get_trx_url(trxhash)
+                    )
                 )
-
 
         except Exception as e:
             Config._log.exception(e)

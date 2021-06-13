@@ -13,7 +13,7 @@ services:
       - WALLET_NAME=${WALLET_NAME}
       - CHAIN_ID=${CHAIN_ID}
       - CHAIN_URL=${CHAIN_URL}
-      - ANCHOR_mmMarket=${ANCHOR_mmMarket}
+      - ANCHOR_mmCustody=${ANCHOR_mmCustody}
       - Mantle_endpoint=${Mantle_endpoint}
       - TARGET_TVL=${TARGET_TVL}
       - MAX_TVL=${MAX_TVL}

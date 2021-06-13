@@ -34,17 +34,18 @@ class AnchorException(Exception):
 
 
 class Anchor:
-    async def get_config():
+    async def get_config(contract_address):
         try:
 
             query = {"config": {}}
             response = await TerraChain.chain.wasm.contract_query(
-                Config._address["mmMarket"],
+                contract_address,
                 query,
             )
             for val in response:
-                if ("terra" in response[val]):
-                    Config._address[val] = response[val]
+                if (isinstance(response[val], str)):
+                    if ("terra" in response[val]):
+                        Config._address[val] = response[val]
 
         except LCDResponseError as e:
             Config._log.exception(e)
@@ -71,7 +72,7 @@ class Anchor:
                 }
             }
             response = await TerraChain.chain.wasm.contract_query(
-                Config._address["mmMarket"],
+                Config._address["market_contract"],
                 query,
             )
             borrow_value = float(response["loan_amount"])
@@ -111,6 +112,44 @@ class Anchor:
 
         return borrow_limit
 
+    async def get_bluna_amount(wallet_address):
+        bluna_price = 0
+        try:
+            query = {"borrower": {"address": wallet_address}}
+            response = await TerraChain.chain.wasm.contract_query(
+                Config._address["mmCustody"],
+                query,
+            )
+            bluna_price = float(response["balance"])
+
+        except LCDResponseError as e:
+            Config._log.exception(e)
+            raise AnchorException(
+                inspect.currentframe().f_code.co_name,
+                e.errno if e.errno else -1,
+                e.message,
+            )
+
+        return bluna_price
+
+
+    async def get_bluna_price():
+        price = None
+        try:
+
+            query = {"price" : {"base": Config._address["collateral_token"], "quote": "uusd"}}
+            response = await TerraChain.chain.wasm.contract_query(Config._address["oracle_contract"], query)
+            price = float(response["rate"]) 
+
+            
+
+        except LCDResponseError as e:
+            Config._log.exception(e)
+            raise AnchorException(inspect.currentframe().f_code.co_name, e.errno if e.errno else -1, e.message)
+            
+
+        return price
+
     async def get_pending_rewards(wallet_address):
         pending_rewards = 0
         try:
@@ -121,7 +160,7 @@ class Anchor:
                 }
             }
             response = await TerraChain.chain.wasm.contract_query(
-                Config._address["mmMarket"],
+                Config._address["market_contract"],
                 query,
             )
             pending_rewards = float(response["pending_rewards"])
@@ -222,7 +261,7 @@ class Anchor:
             query = {"repay_stable": {}}
             return MsgExecuteContract(
                 AccAddress(wallet_address),
-                contract=Config._address["mmMarket"],
+                contract=Config._address["market_contract"],
                 execute_msg=query,
                 coins=Coins(uusd=amount_to_repay),
             )
@@ -246,7 +285,7 @@ class Anchor:
             }
             return MsgExecuteContract(
                 AccAddress(wallet_address),
-                contract=Config._address["mmMarket"],
+                contract=Config._address["market_contract"],
                 execute_msg=query,
             )
 
@@ -263,7 +302,7 @@ class Anchor:
             b64 = dict_to_b64({"redeem_stable": {}})
             msg = {
                 "send": {
-                    "contract": str(Config._address["mmMarket"]),
+                    "contract": str(Config._address["market_contract"]),
                     "amount": str(amount_to_withdraw),
                     "msg": b64,
                 }
@@ -287,7 +326,7 @@ class Anchor:
             query = {"deposit_stable": {}}
             return MsgExecuteContract(
                 AccAddress(wallet_address),
-                contract=Config._address["mmMarket"],
+                contract=Config._address["market_contract"],
                 execute_msg=query,
                 coins=Coins(uusd=amount_to_deposit),
             )
@@ -305,7 +344,7 @@ class Anchor:
             query = {"claim_rewards": {"to": wallet_address}}
             return MsgExecuteContract(
                 AccAddress(wallet_address),
-                contract=Config._address["mmMarket"],
+                contract=Config._address["market_contract"],
                 execute_msg=query,
             )
 
@@ -322,7 +361,7 @@ class Anchor:
         try:
             query = {"epoch_state": {}}
             response = await TerraChain.chain.wasm.contract_query(
-                Config._address["mmMarket"], query
+                Config._address["market_contract"], query
             )
             exchange_rate = float(response["exchange_rate"])
             balance = await Anchor.get_balance_on_earn(wallet_address)
@@ -386,7 +425,7 @@ class Anchor:
 
             query = {
                 "query": '{{\n  marketBalances: BankBalancesAddress(Address: "{}") {{\n    Result {{\n      Denom\n      Amount\n    }}\n  }}\n}}\n'.format(
-                    Config._address["mmMarket"]
+                    Config._address["market_contract"]
                 )
             }
             response = requests.post(Config._address["mantle_endpoint"], query)
@@ -404,7 +443,7 @@ class Anchor:
 
             query = {"state": {"block_height": await Anchor.get_block_height()}}
             response = await TerraChain.chain.wasm.contract_query(
-                Config._address["mmMarket"], query
+                Config._address["market_contract"], query
             )
 
             total_liabilities = response["total_liabilities"]
@@ -425,7 +464,7 @@ class Anchor:
 
             query = {"state": {}}
             response = await TerraChain.chain.wasm.contract_query(
-                Config._address["mmMarket"],
+                Config._address["market_contract"],
                 query,
             )
             borrow_apy = round((float(distribution_apy) - borrow_rate) * 100, 2)

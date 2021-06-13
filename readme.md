@@ -12,7 +12,7 @@ WALLET_MNEMONIC=<BASE64_ENCODED_MNEMONIC>
 WALLET_NAME=Wallet#1
 CHAIN_ID=columbus-4
 CHAIN_URL=https://fcd.terra.dev
-ANCHOR_mmMarket=terra1sepfj7s0aeg5967uxnfk4thzlerrsktkpelm5s
+ANCHOR_mmCustody=terra1ptjp2vfjrwh0j0faj9r6katm640kgjxnwwq9kn
 Mantle_endpoint=https://mantle.anchorprotocol.com
 TARGET_TVL=35
 MAX_TVL=40
@@ -37,10 +37,10 @@ UST_MIN_AMOUNT_ALERT=10
 > - https://fcd.terra.dev ***mainnet***
 > - https://tequila-lcd.terra.dev ***tequila testnet***
 
-**ANCHOR_mmMarket**
-> Anchor mmMarket contract address to use :
-> - terra1sepfj7s0aeg5967uxnfk4thzlerrsktkpelm5s ***mainnet***
-> - terra15dwd5mj8v59wpj0wvt233mf5efdff808c5tkal ***tequila testnet***
+**ANCHOR_mmCustody**
+> Anchor mmCustody contract address to use :
+> - terra1ptjp2vfjrwh0j0faj9r6katm640kgjxnwwq9kn ***mainnet***
+> - terra1ltnkx0mv7lf2rca9f8w740ashu93ujughy4s7p ***tequila testnet***
 
 **Mantle_endpoint**
 > Mantle endpoint to get borrow APY :
@@ -91,6 +91,8 @@ then \
 - Target TVL
 - Max allowed TVL
 - Min allowed TVL
+- Current bLuna price
+- Liquidation price
 - Borrowed amount
 - Borrow Limit amount
 - Pending $ANC rewards

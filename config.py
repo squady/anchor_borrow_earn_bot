@@ -5,7 +5,7 @@ import base64
 
 
 class Config:
-    VERSION = "1.0.6"
+    VERSION = "1.1.0"
     _log = logging.getLogger("anchor_borrow")
     formatter = logging.Formatter(
         "%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
@@ -21,10 +21,6 @@ class Config:
     _mnemonic = base64.b64decode(os.environ.get("WALLET_MNEMONIC")).decode("utf-8")
     _telegram_token = os.environ.get("TELEGRAM_TOKEN", None)
     _telegram_chat_id = int(os.environ.get("TELEGRAM_CHAT_ID", 0))
-    _anchor_mmMarket = os.environ.get(
-        "ANCHOR_mmMarket",
-        "terra15dwd5mj8v59wpj0wvt233mf5efdff808c5tkal",
-    )
     _target_tvl = float(os.environ.get("TARGET_TVL", 35))
     _min_tvl = float(os.environ.get("MIN_TVL", 30))
     _max_tvl = float(os.environ.get("MAX_TVL", 40))
@@ -33,10 +29,10 @@ class Config:
     _minimum_ust_amount = int(os.environ.get("UST_MIN_AMOUNT_ALERT", 2))
 
     _address = {}
-    _address["mmMarket"] = os.environ.get(
-        "ANCHOR_mmMarket",
-        "terra15dwd5mj8v59wpj0wvt233mf5efdff808c5tkal",
-    )
+    _address["mmCustody"] = os.environ.get(
+        "ANCHOR_mmCustody",
+        "terra1ltnkx0mv7lf2rca9f8w740ashu93ujughy4s7p",
+    )    
     _address["mantle_endpoint"] = os.environ.get(
         "Mantle_endpoint",
         "https://tequila-mantle.anchorprotocol.com",
