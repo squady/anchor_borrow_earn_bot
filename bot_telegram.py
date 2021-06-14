@@ -12,14 +12,14 @@ from helper import Helper
 from config import Config
 
 
-BORROW_INFOS = "💱 Borrow infos"
-EARN_INFOS = "💰 Earn infos"
+ANCHOR_INFOS = "💱 Anchor infos"
 WALLET_INFOS = "👛 Wallet infos"
 CHANGE_TARGET_TVL = "✏️ Target TVL 🟢"
 CHANGE_MIN_TVL = "✏️ Min TVL 🟠"
 CHANGE_MAX_TVL = "✏️ Max TVL 🔴"
 CLAIM_REWARDS = "🎁 Claim rewards"
-DEPOSIT_AMOUNT = "💵 Deposit Amount"
+DEPOSIT_AMOUNT = "⬆️ Deposit Amount"
+WITHDRAW_AMOUNT = "⬇️ Withdraw Amount"
 FETCH_TVL = "🎯 Reach the Target TVL"
 
 
@@ -30,6 +30,7 @@ class Form(StatesGroup):
     reach_tvl = State()
     claim_rewards = State()
     deposit_amount = State()
+    withdraw_amount = State()
     confirm = State()
 
 
@@ -44,9 +45,9 @@ dp = Dispatcher(bot, storage=storage)
 events = Event()
 
 keyboard_main_menu = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-keyboard_main_menu.add(BORROW_INFOS, EARN_INFOS, WALLET_INFOS)
+keyboard_main_menu.add(ANCHOR_INFOS, FETCH_TVL, WALLET_INFOS)
 keyboard_main_menu.add(CHANGE_MIN_TVL, CHANGE_TARGET_TVL, CHANGE_MAX_TVL)
-keyboard_main_menu.add(FETCH_TVL, DEPOSIT_AMOUNT, CLAIM_REWARDS)
+keyboard_main_menu.add(DEPOSIT_AMOUNT, WITHDRAW_AMOUNT, CLAIM_REWARDS)
 
 
 @dp.message_handler(commands=["start"])
@@ -59,20 +60,12 @@ async def show_start(message: types.Message):
 
 @dp.message_handler(
     lambda message: message.text
-    and BORROW_INFOS in message.text
+    and ANCHOR_INFOS in message.text
     and message.chat.id == Config._telegram_chat_id
 )
 async def get_borrow_infos(message: types.Message):
-    await events.async_set(Action.GET_BORROW_INFOS)
+    await events.async_set(Action.GET_ANCHOR_INFOS)
 
-
-@dp.message_handler(
-    lambda message: message.text
-    and EARN_INFOS in message.text
-    and message.chat.id == Config._telegram_chat_id
-)
-async def get_earn_infos(message: types.Message):
-    await events.async_set(Action.GET_EARN_INFOS)
 
 
 @dp.message_handler(
@@ -96,65 +89,35 @@ async def get_wallet_infos(message: types.Message, state: FSMContext):
 
 @dp.message_handler(
     lambda message: message.text
-    and CHANGE_TARGET_TVL in message.text
+    and ( (CHANGE_TARGET_TVL == message.text)
+        or (CHANGE_MIN_TVL == message.text)
+        or (CHANGE_MAX_TVL == message.text) )
     and message.chat.id == Config._telegram_chat_id
 )
-async def get_change_target_tvl(message: types.Message, state: FSMContext):
+async def get_change_tvl(message: types.Message, state: FSMContext):
     try:
+        form_state = None
+        type_tvl = None
+        if (CHANGE_MIN_TVL == message.text):
+            form_state = Form.change_min_tvl
+            type_tvl = TVL_TYPE.MIN
+        elif (CHANGE_TARGET_TVL == message.text):
+            form_state = Form.change_target_tvl
+            type_tvl = TVL_TYPE.TARGET
+        elif (CHANGE_MAX_TVL == message.text):
+            form_state = Form.change_max_tvl
+            type_tvl = TVL_TYPE.MAX
 
-        await Form.change_target_tvl.set()
-        await state.set_data(
-            {"from": Form.change_target_tvl.state, "type_tvl": TVL_TYPE.TARGET}
-        )
-        await message.reply(
-            "Please set the new value :",
-            reply=True,
-            reply_markup=force_reply.ForceReply(),
-        )
-
-    except Exception as e:
-        Config._log.exception(e)
-
-
-@dp.message_handler(
-    lambda message: message.text
-    and CHANGE_MIN_TVL in message.text
-    and message.chat.id == Config._telegram_chat_id
-)
-async def get_change_min_tvl(message: types.Message, state: FSMContext):
-    try:
-
-        await Form.change_min_tvl.set()
-        await state.set_data(
-            {"from": Form.change_min_tvl.state, "type_tvl": TVL_TYPE.MIN}
-        )
-        await message.reply(
-            "Please set the new value :",
-            reply=True,
-            reply_markup=force_reply.ForceReply(),
-        )
-
-    except Exception as e:
-        Config._log.exception(e)
-
-
-@dp.message_handler(
-    lambda message: message.text
-    and CHANGE_MAX_TVL in message.text
-    and message.chat.id == Config._telegram_chat_id
-)
-async def get_change_max_tvl(message: types.Message, state: FSMContext):
-    try:
-
-        await Form.change_max_tvl.set()
-        await state.set_data(
-            {"from": Form.change_max_tvl.state, "type_tvl": TVL_TYPE.MAX}
-        )
-        await message.reply(
-            "Please set the new value :",
-            reply=True,
-            reply_markup=force_reply.ForceReply(),
-        )
+        if (form_state is not None and type_tvl is not None):
+            await form_state.set()
+            await state.set_data(
+                {"from": form_state.state, "type_tvl": type_tvl}
+            )
+            await message.reply(
+                "Please set the new value :",
+                reply=True,
+                reply_markup=force_reply.ForceReply(),
+            )
 
     except Exception as e:
         Config._log.exception(e)
@@ -226,6 +189,45 @@ async def deposit_amount_callback(message: types.Message, state: FSMContext):
     except Exception as e:
         Config._log.exception(e)
 
+@dp.message_handler(
+    lambda message: message.text
+    and WITHDRAW_AMOUNT in message.text
+    and message.chat.id == Config._telegram_chat_id
+)
+async def get_withdraw_amount(message: types.Message, state: FSMContext):
+    try:
+
+        await Form.withdraw_amount.set()
+        await message.reply(
+            "Please set amount to withdraw :",
+            reply=True,
+            reply_markup=force_reply.ForceReply(),
+        )
+
+    except Exception as e:
+        Config._log.exception(e)
+
+
+@dp.message_handler(state=Form.withdraw_amount)
+async def withdraw_amount_callback(message: types.Message, state: FSMContext):
+    try:
+        await state.finish()
+        withdraw_amount = message.text
+        if Helper.is_number(withdraw_amount) == True:
+            await state.set_data(
+                {"from": Form.withdraw_amount.state, "amount": withdraw_amount}
+            )
+            await ask_to_confirm(message, state)
+        else:
+            await message.answer(
+                "Wrong value, try again and set a numeric value",
+                reply_markup=keyboard_main_menu,
+            )
+
+    except Exception as e:
+        Config._log.exception(e)
+
+
 
 @dp.message_handler(
     lambda message: message.text
@@ -289,6 +291,10 @@ async def confirm_callback(message: types.Message, state: FSMContext):
                 elif form_from == Form.deposit_amount.state:
                     await events.async_set(
                         Action.DEPOSIT_AMOUNT, amount=datas.get("amount", 0)
+                    )
+                elif form_from == Form.withdraw_amount.state:
+                    await events.async_set(
+                        Action.WITHDRAW_AMOUNT, amount=datas.get("amount", 0)
                     )
                 else:
                     Config._log.error("Error, don't know what was confirmed")

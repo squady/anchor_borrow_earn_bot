@@ -23,13 +23,8 @@ class Main:
 
         bot_telegram.events.addObserver(
             self,
-            Action.GET_BORROW_INFOS,
-            self.get_borrow_infos,
-        )
-        bot_telegram.events.addObserver(
-            self,
-            Action.GET_EARN_INFOS,
-            self.get_earn_infos,
+            Action.GET_ANCHOR_INFOS,
+            self.get_anchor_infos,
         )
         bot_telegram.events.addObserver(
             self,
@@ -50,6 +45,11 @@ class Main:
             self,
             Action.DEPOSIT_AMOUNT,
             self.set_deposit_amount,
+        )
+        bot_telegram.events.addObserver(
+            self,
+            Action.WITHDRAW_AMOUNT,
+            self.set_withdraw_amount,
         )
         bot_telegram.events.addObserver(
             self,
@@ -80,6 +80,20 @@ class Main:
 
         except Exception as e:
             Config._log.exception(e)
+    
+    
+    async def get_anchor_infos(self):
+        try:
+            await self.get_borrow_infos()
+            await self.get_earn_infos()
+
+        except AnchorException as e:
+            Config._log.exception(e)
+            await bot_telegram.send_message(e.to_telegram_str())
+
+        except Exception as e:
+            Config._log.exception(e)
+
 
     async def get_borrow_infos(self):
         try:
@@ -183,7 +197,7 @@ class Main:
             message += "🔗 Chain id: <code>{}</code>\n".format(Config._chain_id)
             message += "🌎 Chain url: <code>{}</code>\n".format(Config._chain_url)
             message += "💴 Address: <code>{}</code>\n".format(wallet_address)
-            message += "💴 UUSD: <code>{}$</code>\n".format(
+            message += "💲 UST: <code>{}$</code>\n".format(
                 Helper.to_human_value(uusd_amount)
             )
             await bot_telegram.send_message(message)
@@ -535,6 +549,52 @@ class Main:
         finally:
             await self.handle_result(trxhash)
 
+
+    async def set_withdraw_amount(self, **kwargs):
+        trxhash = None
+        try:
+            wallet_address = self._wallet.get_wallet_address()
+            await self.check_if_enough_ust_for_fees()
+            amount_to_withdraw = kwargs["amount"]
+            await bot_telegram.send_message(
+                "Going to withdraw <code>{}$</code> from earn.".format(amount_to_withdraw),
+                show_keyboard=False,
+                show_typing=True,
+            )
+            amount_to_withdraw = int(Helper.to_terra_value(float(amount_to_withdraw)))
+            amount_on_earn = await Anchor.get_balance_on_earn(wallet_address)
+            if amount_to_withdraw > amount_on_earn:
+                await bot_telegram.send_message(
+                    "Not enough liquidity on earn"
+                )
+            else:
+                await bot_telegram.send_message(
+                    "Sending transaction ...",
+                    show_keyboard=False,
+                    show_typing=True,
+                )
+                trxhash = await Anchor.do_trx(
+                    self._wallet._wallet,
+                    [
+                        await Anchor.get_withdraw_from_earn_msg(
+                            wallet_address,
+                            amount_to_withdraw,
+                        )
+                    ],
+                )
+
+        except AnchorException as e:
+            Config._log.exception(e)
+            await bot_telegram.send_message(
+                e.to_telegram_str(),
+                show_keyboard=False,
+                show_typing=True,
+            )
+
+        except Exception as e:
+            Config._log.exception(e)
+        finally:
+            await self.handle_result(trxhash)
     async def claim_rewards(self, **kwargs):
         trxhash = None
         try:
