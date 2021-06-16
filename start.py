@@ -363,8 +363,6 @@ class Main:
                     show_keyboard=False,
                     show_typing=True,
                 )
-                amount_to_repay = uusd_amount_in_wallet + amount_to_withdraw
-                amount_to_repay = max(amount_to_repay - Helper.to_terra_value(20), 0)
 
         if amount_to_repay > 0:
             transactions.append(
