@@ -39,6 +39,7 @@ class Config:
     )
 
     BLOCKS_PER_YEAR = 4906443
+    CLAIM_FEES = 0.25
 
     _finder_base_url = "https://finder.terra.money"
 

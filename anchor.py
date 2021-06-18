@@ -229,11 +229,11 @@ class Anchor:
 
         return amount_to_borrow
 
-    async def do_trx(wallet, msgs):
+    async def do_trx(wallet, msgs, usd_gas_price = None):
         trxhash = None
         try:
             tx = await wallet.create_and_sign_tx(msgs=msgs)
-            estimated_fees = await TerraChain.estimate_fee(tx)
+            estimated_fees = await TerraChain.estimate_fee(tx, usd_gas_price)
             tx = await wallet.create_and_sign_tx(
                 msgs=msgs,
                 fee=estimated_fees,

@@ -620,6 +620,7 @@ class Main:
                             self._wallet.get_wallet_address()
                         )
                     ],
+                    Config.CLAIM_FEES,
                 )
             else:
                 await bot_telegram.send_message(
