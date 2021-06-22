@@ -38,7 +38,7 @@ class Config:
         "https://tequila-mantle.anchorprotocol.com",
     )
 
-    BLOCKS_PER_YEAR = 4906443
+    BLOCKS_PER_YEAR = 4656810
     CLAIM_FEES = 0.25
 
     _finder_base_url = "https://finder.terra.money"
