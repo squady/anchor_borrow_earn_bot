@@ -80,12 +80,14 @@ class Main:
 
         except Exception as e:
             Config._log.exception(e)
-    
-    
+
+
     async def get_anchor_infos(self):
         try:
-            await self.get_borrow_infos()
-            await self.get_earn_infos()
+            await asyncio.gather(
+                self.get_borrow_infos(),
+                self.get_earn_infos(),
+            )
 
         except AnchorException as e:
             Config._log.exception(e)
@@ -103,13 +105,24 @@ class Main:
                 show_typing=True,
             )
 
-            await bot_telegram.show_is_typing()
             wallet_address = self._wallet.get_wallet_address()
-            borrow_apy = await Anchor.get_borrow_apy()
-            borrow_value = await Anchor.get_borrow_value(wallet_address)
-            borrow_limit = await Anchor.get_borrow_limit(wallet_address)
-            bluna_amount = await Anchor.get_bluna_amount(wallet_address)
-            bluna_price = round(await Anchor.get_bluna_price(), 2)
+
+
+            results = await asyncio.gather(
+                bot_telegram.show_is_typing(),
+                Anchor.get_borrow_apy(),
+                Anchor.get_borrow_value(wallet_address),
+                Anchor.get_borrow_limit(wallet_address),
+                Anchor.get_bluna_amount(wallet_address),
+                Anchor.get_bluna_price()
+            )
+
+            borrow_apy = results[1]
+            borrow_value = results[2]
+            borrow_limit = results[3]
+            bluna_amount = results[4]
+            bluna_price = round(results[5], 2)
+
             liquidation_price = round(
                 (borrow_value * 2) / bluna_amount,
                 2,
@@ -134,7 +147,9 @@ class Main:
                 message += "🔴 Max TVL: <code>{}%</code>\n".format(Config._max_tvl)
                 message += "🟠 Min TVL: <code>{}%</code>\n".format(Config._min_tvl)
                 message += "🌖 bLuna price: <code>{}$</code>\n".format(bluna_price)
-                message += "☠️ Liquidation price: <code>{}$</code>\n".format(liquidation_price)
+                message += "☠️ Liquidation price: <code>{}$</code>\n".format(
+                    liquidation_price
+                )
                 message += "💴 Borrowed: <code>{}$</code>\n".format(
                     Helper.to_human_value(borrow_value)
                 )
@@ -164,10 +179,16 @@ class Main:
 
     async def get_earn_infos(self):
         try:
-            await bot_telegram.show_is_typing()
             wallet_address = self._wallet.get_wallet_address()
-            total_deposit = await Anchor.get_total_deposit_amount(wallet_address)
-            earn_apy = await Anchor.get_earn_apy()
+
+            results = await asyncio.gather(
+                bot_telegram.show_is_typing(),
+                Anchor.get_total_deposit_amount(wallet_address),
+                Anchor.get_earn_apy()
+            )
+
+            total_deposit = results[1]
+            earn_apy = results[2]
 
             message = "<u><b>💰 Earn infos :</b></u>\n\n"
             message += "💴 Total Deposit: <code>{}$</code>\n".format(
@@ -185,10 +206,16 @@ class Main:
 
     async def get_wallet_infos(self):
         try:
-            await self.check_if_enough_ust_for_fees()
-            await bot_telegram.show_is_typing()
             wallet_address = self._wallet.get_wallet_address()
-            uusd_amount = await self._wallet.get_uusd_amount()
+            
+
+            results = await asyncio.gather(
+                bot_telegram.show_is_typing(),
+                self.check_if_enough_ust_for_fees(),
+                self._wallet.get_uusd_amount()
+            )
+
+            uusd_amount = results[2]
 
             message = "<u><b>👛 <a href='{}'>{}</a></b></u>".format(
                 self._wallet.get_wallet_url(), self._wallet.get_wallet_name()
@@ -547,7 +574,6 @@ class Main:
         finally:
             await self.handle_result(trxhash)
 
-
     async def set_withdraw_amount(self, **kwargs):
         trxhash = None
         try:
@@ -555,16 +581,16 @@ class Main:
             await self.check_if_enough_ust_for_fees()
             amount_to_withdraw = kwargs["amount"]
             await bot_telegram.send_message(
-                "Going to withdraw <code>{}$</code> from earn.".format(amount_to_withdraw),
+                "Going to withdraw <code>{}$</code> from earn.".format(
+                    amount_to_withdraw
+                ),
                 show_keyboard=False,
                 show_typing=True,
             )
             amount_to_withdraw = int(Helper.to_terra_value(float(amount_to_withdraw)))
             amount_on_earn = await Anchor.get_balance_on_earn(wallet_address)
             if amount_to_withdraw > amount_on_earn:
-                await bot_telegram.send_message(
-                    "Not enough liquidity on earn"
-                )
+                await bot_telegram.send_message("Not enough liquidity on earn")
             else:
                 await bot_telegram.send_message(
                     "Sending transaction ...",
@@ -593,6 +619,7 @@ class Main:
             Config._log.exception(e)
         finally:
             await self.handle_result(trxhash)
+
     async def claim_rewards(self, **kwargs):
         trxhash = None
         try:
