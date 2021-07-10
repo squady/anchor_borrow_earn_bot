@@ -86,7 +86,7 @@ then \
 
 # What can it do
 
-## Show your Borrow datas
+## Show your Anchor datas
 - current TVL
 - Target TVL
 - Max allowed TVL
@@ -98,13 +98,10 @@ then \
 - Pending $ANC rewards
 - Current Borrow APY
 
-![image](./imgs/borrow_infos.png)
-
-## Show your Earn datas
 - Total deposit
 - Current Earn APY
 
-![image](./imgs/earn_infos.png)
+![image](./imgs/anchor_infos.png)
 
 ## Show your wallet infos
 - wallet name : (Bot version)
@@ -155,6 +152,12 @@ The bot ask you the amount you want to deposit. \
 Keep in mind, you must have this amount in your wallet.
 
 ![image](./imgs/deposit.png)
+
+## Withdraw UST from earn
+If you have need some UST, you can withdraw any amount from Earn. \
+The bot ask you the amount you want to witdrawn. \
+
+![image](./imgs/withdraw.png)
 
 
 
