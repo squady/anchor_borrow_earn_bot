@@ -5,7 +5,7 @@ import base64
 
 
 class Config:
-    VERSION = "1.1.3"
+    VERSION = "1.1.4"
     _log = logging.getLogger("anchor_borrow")
     formatter = logging.Formatter(
         "%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
@@ -27,7 +27,7 @@ class Config:
     _chain_id = os.environ.get("CHAIN_ID", "tequila-0004")
     _chain_url = os.environ.get("CHAIN_URL", "https://tequila-lcd.terra.dev")
     _minimum_ust_amount = int(os.environ.get("UST_MIN_AMOUNT_ALERT", 2))
-
+    _maximum_tvl_allowed = 100/60
     _address = {}
     _address["mmCustody"] = os.environ.get(
         "ANCHOR_mmCustody",

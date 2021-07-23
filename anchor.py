@@ -185,7 +185,7 @@ class Anchor:
 
         if borrow_value != 0 and borrow_limit != 0:
             # (v1*100/v2)
-            current_tvl = round((borrow_value * 100) / (borrow_limit * 2), 2)
+            current_tvl = round((borrow_value * 100) / (borrow_limit * Config._maximum_tvl_allowed), 2)
 
         return current_tvl
 
@@ -200,7 +200,7 @@ class Anchor:
                 borrow_limit = await Anchor.get_borrow_limit(wallet_address)
 
             amount_to_repay = int(
-                borrow_value - ((target_tvl * (borrow_limit * 2)) / 100)
+                borrow_value - ((target_tvl * (borrow_limit * Config._maximum_tvl_allowed)) / 100)
             )
 
         except Exception as e:
@@ -220,7 +220,7 @@ class Anchor:
                 borrow_limit = await Anchor.get_borrow_limit(wallet_address)
 
             amount_to_borrow = int(
-                ((target_tvl * (borrow_limit * 2)) / 100) - borrow_value
+                ((target_tvl * (borrow_limit * Config._maximum_tvl_allowed)) / 100) - borrow_value
             )
 
         except Exception as e:
