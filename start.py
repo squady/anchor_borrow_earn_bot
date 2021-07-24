@@ -124,7 +124,7 @@ class Main:
             bluna_price = round(results[5], 2)
 
             liquidation_price = round(
-                (borrow_value * 2) / bluna_amount,
+                (borrow_value * Config._maximum_tvl_allowed) / bluna_amount,
                 2,
             )
             if borrow_value != 0 and borrow_limit != 0:

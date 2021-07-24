@@ -5,7 +5,7 @@ import base64
 
 
 class Config:
-    VERSION = "1.1.4"
+    VERSION = "1.1.5"
     _log = logging.getLogger("anchor_borrow")
     formatter = logging.Formatter(
         "%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
