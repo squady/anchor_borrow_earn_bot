@@ -11,7 +11,7 @@ Copy the `env_sample` to `.env` file, and change the values to your needs.
 WALLET_MNEMONIC=<BASE64_ENCODED_MNEMONIC>
 WALLET_NAME=Wallet#1
 CHAIN_ID=columbus-4
-CHAIN_URL=https://fcd.terra.dev
+CHAIN_URL=https://lcd.terra.dev
 ANCHOR_mmCustody=terra1ptjp2vfjrwh0j0faj9r6katm640kgjxnwwq9kn
 Mantle_endpoint=https://mantle.anchorprotocol.com
 TARGET_TVL=35
