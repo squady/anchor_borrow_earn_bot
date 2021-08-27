@@ -7,7 +7,7 @@ services:
       context:
         ./
     restart: unless-stopped
-    container_name: anchor_bot
+    container_name: ${CONTAINER_NAME}
     environment: 
       - WALLET_MNEMONIC=${WALLET_MNEMONIC}
       - WALLET_NAME=${WALLET_NAME}
