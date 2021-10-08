@@ -1,9 +1,10 @@
 import requests
 import inspect
+import base64
+import json
 from terra_sdk.core.wasm.msgs import MsgExecuteContract
 from terra_sdk.core.coins import Coins
 from terra_sdk.core.strings import AccAddress
-from terra_sdk.core.wasm.msgs import dict_to_b64
 from terra_sdk.exceptions import LCDResponseError
 from aiogram.utils.markdown import quote_html
 from terra_chain import TerraChain
@@ -299,7 +300,7 @@ class Anchor:
 
     async def get_withdraw_from_earn_msg(wallet_address, amount_to_withdraw):
         try:
-            b64 = dict_to_b64({"redeem_stable": {}})
+            b64 = base64.b64encode(bytes(json.dumps({"redeem_stable": {}}), "ascii")).decode()
             msg = {
                 "send": {
                     "contract": str(Config._address["market_contract"]),
@@ -356,14 +357,29 @@ class Anchor:
                 e.message,
             )
 
-    async def get_total_deposit_amount(wallet_address):
-        total_deposit = 0
+    async def get_exchange_rate():
+        exchange_rate = 0
         try:
             query = {"epoch_state": {}}
             response = await TerraChain.chain.wasm.contract_query(
                 Config._address["market_contract"], query
             )
             exchange_rate = float(response["exchange_rate"])
+
+        except LCDResponseError as e:
+            Config._log.exception(e)
+            raise AnchorException(
+                inspect.currentframe().f_code.co_name,
+                e.errno if e.errno else -1,
+                e.message,
+            )
+
+        return exchange_rate
+
+    async def get_total_deposit_amount(wallet_address):
+        total_deposit = 0
+        try:
+            exchange_rate = await Anchor.get_exchange_rate()
             balance = await Anchor.get_balance_on_earn(wallet_address)
             total_deposit = exchange_rate * balance
 
@@ -433,20 +449,15 @@ class Anchor:
                 "Amount"
             ]
 
-            query = {
-                "query": "{ borrowerDistributionAPYs: AnchorBorrowerDistributionAPYs(Order: DESC Limit: 1) {Height Timestamp DistributionAPY}}"
-            }
-            response = requests.post(Config._address["mantle_endpoint"], query)
-            distribution_apy = response.json()["data"]["borrowerDistributionAPYs"][0][
-                "DistributionAPY"
-            ]
+            response = requests.get("https://api.anchorprotocol.com/api/v2/distribution-apy").json()
+            distribution_apy = response["distribution_apy"]
+            total_liabilities = response["total_liabilities"]
 
-            query = {"state": {"block_height": await Anchor.get_block_height()}}
+            query = {"state": {}}
             response = await TerraChain.chain.wasm.contract_query(
                 Config._address["market_contract"], query
             )
 
-            total_liabilities = response["total_liabilities"]
             total_reserves = response["total_reserves"]
 
             query = {

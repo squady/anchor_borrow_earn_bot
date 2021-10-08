@@ -12,14 +12,16 @@ class TerraChain:
         fees = None
         try:
             if usd_gas_price is None:
-                usd_gas_price = TerraChain.get_gas_price()
+                # TO FIX !
+                usd_gas_price = Config.FORCED_FEES
+                # usd_gas_price = TerraChain.get_gas_price()
 
-                fees = await TerraChain.chain.tx.estimate_fee(
-                    tx,
-                    gas_prices={"uusd": usd_gas_price},
-                    gas_adjustment=1.4,
-                    fee_denoms=["uusd"],
-                )
+                # fees = await TerraChain.chain.tx.estimate_fee( 
+                #     tx,
+                #     gas_prices={"uusd": usd_gas_price},
+                #     gas_adjustment=1.4,
+                #     fee_denoms=["uusd"],
+                # )
             else:
                 fees = StdFee(
                     1000000,

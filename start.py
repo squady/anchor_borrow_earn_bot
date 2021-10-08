@@ -408,7 +408,7 @@ class Main:
                 show_keyboard=False,
                 show_typing=True,
             )
-            return await Anchor.do_trx(wallet._wallet, transactions)
+            return await Anchor.do_trx(wallet._wallet, transactions, Config.FORCED_FEES)
 
         else:
             raise AnchorException(
@@ -447,7 +447,7 @@ class Main:
             show_keyboard=False,
             show_typing=True,
         )
-        return await Anchor.do_trx(wallet._wallet, transactions)
+        return await Anchor.do_trx(wallet._wallet, transactions, Config.FORCED_FEES)
 
     async def change_tvl(self, **kwargs):
         try:
@@ -559,6 +559,7 @@ class Main:
                             amount_to_deposit,
                         )
                     ],
+                    Config.FORCED_FEES
                 )
 
         except AnchorException as e:
@@ -587,7 +588,8 @@ class Main:
                 show_keyboard=False,
                 show_typing=True,
             )
-            amount_to_withdraw = int(Helper.to_terra_value(float(amount_to_withdraw)))
+            exchange_rate = await Anchor.get_exchange_rate()
+            amount_to_withdraw = int(Helper.to_terra_value(float(amount_to_withdraw) / exchange_rate))
             amount_on_earn = await Anchor.get_balance_on_earn(wallet_address)
             if amount_to_withdraw > amount_on_earn:
                 await bot_telegram.send_message("Not enough liquidity on earn")
@@ -605,6 +607,7 @@ class Main:
                             amount_to_withdraw,
                         )
                     ],
+                    Config.FORCED_FEES
                 )
 
         except AnchorException as e:

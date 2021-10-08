@@ -5,7 +5,7 @@ import base64
 
 
 class Config:
-    VERSION = "1.1.6"
+    VERSION = "2.0.0"
     _log = logging.getLogger("anchor_borrow")
     formatter = logging.Formatter(
         "%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
@@ -39,7 +39,8 @@ class Config:
     )
 
     BLOCKS_PER_YEAR = 4656810
-    CLAIM_FEES = 0.25
+    CLAIM_FEES = 0.762
+    FORCED_FEES = 1
 
     _finder_base_url = "https://finder.terra.money"
 
