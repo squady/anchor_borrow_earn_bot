@@ -132,12 +132,12 @@ async def change_min_tvl_callback(message: types.Message, state: FSMContext):
         new_tvl = message.text
         if Helper.is_number(new_tvl) == True:
             new_tvl = float(new_tvl)
-            if new_tvl > 0 and new_tvl <= 45:
+            if new_tvl > 0 and new_tvl <= Config.MAX_ALLOWED_TVL:
                 await state.update_data({"value": new_tvl})
                 await ask_to_confirm(message, state)
             else:
                 await message.answer(
-                    "Wrong value, please specify a TVL between 0 and 45",
+                    "Wrong value, please specify a TVL between 0 and {}".format(Config.MAX_ALLOWED_TVL),
                     reply_markup=keyboard_main_menu,
                 )
 
