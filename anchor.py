@@ -232,10 +232,11 @@ class Anchor:
 
     async def do_trx(wallet, msgs, usd_gas_price = None):
         trxhash = None
+        terra_wallet = wallet._wallet
         try:
-            tx = await wallet.create_and_sign_tx(msgs=msgs)
-            estimated_fees = await TerraChain.estimate_fee(tx, usd_gas_price)
-            tx = await wallet.create_and_sign_tx(
+            tx = await terra_wallet.create_and_sign_tx(msgs=msgs)
+            estimated_fees = await TerraChain.estimate_fee(wallet.get_wallet_address(), msgs, usd_gas_price)
+            tx = await terra_wallet.create_and_sign_tx(
                 msgs=msgs,
                 fee=estimated_fees,
             )

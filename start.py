@@ -408,7 +408,7 @@ class Main:
                 show_keyboard=False,
                 show_typing=True,
             )
-            return await Anchor.do_trx(wallet._wallet, transactions, Config.FORCED_FEES)
+            return await Anchor.do_trx(wallet, transactions)
 
         else:
             raise AnchorException(
@@ -447,7 +447,7 @@ class Main:
             show_keyboard=False,
             show_typing=True,
         )
-        return await Anchor.do_trx(wallet._wallet, transactions, Config.FORCED_FEES)
+        return await Anchor.do_trx(wallet, transactions)
 
     async def change_tvl(self, **kwargs):
         try:
@@ -552,14 +552,13 @@ class Main:
                     show_typing=True,
                 )
                 trxhash = await Anchor.do_trx(
-                    self._wallet._wallet,
+                    self._wallet,
                     [
                         await Anchor.get_deposit_to_earn_msg(
                             wallet_address,
                             amount_to_deposit,
                         )
-                    ],
-                    Config.FORCED_FEES
+                    ]
                 )
 
         except AnchorException as e:
@@ -600,14 +599,13 @@ class Main:
                     show_typing=True,
                 )
                 trxhash = await Anchor.do_trx(
-                    self._wallet._wallet,
+                    self._wallet,
                     [
                         await Anchor.get_withdraw_from_earn_msg(
                             wallet_address,
                             amount_to_withdraw,
                         )
-                    ],
-                    Config.FORCED_FEES
+                    ]
                 )
 
         except AnchorException as e:
@@ -644,7 +642,7 @@ class Main:
                     show_typing=True,
                 )
                 trxhash = await Anchor.do_trx(
-                    self._wallet._wallet,
+                    self._wallet,
                     [
                         await Anchor.get_claim_anc_rewards_msg(
                             self._wallet.get_wallet_address()
