@@ -10,7 +10,7 @@ import inspect
 from looper import Looper
 from anchor import Anchor, AnchorException
 from terra_wallet import TerraWallet
-from action import Action, TVL_TYPE
+from action import Action, LTV_TYPE
 import bot_telegram
 from config import Config
 
@@ -33,13 +33,13 @@ class Main:
         )
         bot_telegram.events.addObserver(
             self,
-            Action.FETCH_TVL,
-            self.do_reach_target_tvl,
+            Action.FETCH_LTV,
+            self.do_reach_target_ltv,
         )
         bot_telegram.events.addObserver(
             self,
-            Action.CHANGE_TVL,
-            self.change_tvl,
+            Action.CHANGE_LTV,
+            self.change_ltv,
         )
         bot_telegram.events.addObserver(
             self,
@@ -124,28 +124,28 @@ class Main:
             bluna_price = round(results[5], 2)
 
             liquidation_price = round(
-                (borrow_value * Config._maximum_tvl_allowed) / bluna_amount,
+                (borrow_value * Config._maximum_ltv_allowed) / bluna_amount,
                 2,
             )
             if borrow_value != 0 and borrow_limit != 0:
-                current_tvl = await Anchor.get_current_tvl(
+                current_ltv = await Anchor.get_current_ltv(
                     wallet_address, borrow_value, borrow_limit
                 )
                 pending_rewards = await Anchor.get_pending_rewards(wallet_address)
 
-                current_tvl_state = "🟢"
-                if current_tvl < Config._min_tvl:
-                    current_tvl_state = "🟠"
-                elif current_tvl > Config._max_tvl:
-                    current_tvl_state = "🔴"
+                current_ltv_state = "🟢"
+                if current_ltv < Config._min_ltv:
+                    current_ltv_state = "🟠"
+                elif current_ltv > Config._max_ltv:
+                    current_ltv_state = "🔴"
 
                 message = "<u><b>💱 Borrow infos :</b></u>\n\n"
-                message += "{} Current TVL: <code>{}%</code>\n".format(
-                    current_tvl_state, current_tvl
+                message += "{} Current LTV: <code>{}%</code>\n".format(
+                    current_ltv_state, current_ltv
                 )
-                message += "🟢 Target TVL: <code>{}%</code>\n".format(Config._target_tvl)
-                message += "🔴 Max TVL: <code>{}%</code>\n".format(Config._max_tvl)
-                message += "🟠 Min TVL: <code>{}%</code>\n".format(Config._min_tvl)
+                message += "🟢 Target LTV: <code>{}%</code>\n".format(Config._target_ltv)
+                message += "🔴 Max LTV: <code>{}%</code>\n".format(Config._max_ltv)
+                message += "🟠 Min LTV: <code>{}%</code>\n".format(Config._min_ltv)
                 message += "🌖 bLuna price: <code>{}$</code>\n".format(bluna_price)
                 message += "☠️ Liquidation price: <code>{}$</code>\n".format(
                     liquidation_price
@@ -236,39 +236,39 @@ class Main:
         except Exception as e:
             Config._log.exception(e)
 
-    async def do_reach_target_tvl(self):
+    async def do_reach_target_ltv(self):
         trxhash = None
         try:
             await self.check_if_enough_ust_for_fees()
             wallet_address = self._wallet.get_wallet_address()
             await bot_telegram.send_message(
-                "Please wait while the bot changes TVL...",
+                "Please wait while the bot changes LTV...",
                 show_keyboard=False,
                 show_typing=True,
             )
-            current_tvl = await Anchor.get_current_tvl(wallet_address)
+            current_ltv = await Anchor.get_current_ltv(wallet_address)
             await bot_telegram.send_message(
-                "Change TVL from <code>{}%</code> to <code>{}%</code> ...".format(
-                    current_tvl, Config._target_tvl
+                "Change LTV from <code>{}%</code> to <code>{}%</code> ...".format(
+                    current_ltv, Config._target_ltv
                 ),
                 show_keyboard=False,
                 show_typing=True,
             )
-            if current_tvl is not None:
-                if current_tvl > Config._target_tvl:
+            if current_ltv is not None:
+                if current_ltv > Config._target_ltv:
                     # do withdraxw if need
                     # then do repay
                     amount_to_repay = await Anchor.get_amount_to_repay(
-                        wallet_address, Config._target_tvl
+                        wallet_address, Config._target_ltv
                     )
                     trxhash = await self.do_withdraw_if_needed_and_repay(
                         self._wallet, int(amount_to_repay)
                     )
 
-                elif current_tvl < Config._target_tvl:
+                elif current_ltv < Config._target_ltv:
                     # do borrow
                     amount_to_borrow = await Anchor.get_amount_to_borrow(
-                        wallet_address, Config._target_tvl
+                        wallet_address, Config._target_ltv
                     )
                     trxhash = await self.do_borrow_and_deposit(
                         self._wallet, amount_to_borrow
@@ -298,33 +298,33 @@ class Main:
 
             wallet_address = self._wallet.get_wallet_address()
 
-            current_tvl = await Anchor.get_current_tvl(wallet_address)
-            if current_tvl is not None:
-                if current_tvl < Config._min_tvl:
-                    message = "❗️ TVL too low ❗️\n"
+            current_ltv = await Anchor.get_current_ltv(wallet_address)
+            if current_ltv is not None:
+                if current_ltv < Config._min_ltv:
+                    message = "❗️ LTV too low ❗️\n"
                     message += "Min is : <code>{}%</code> Current is : <code>{}%</code>".format(
-                        Config._min_tvl,
-                        current_tvl,
+                        Config._min_ltv,
+                        current_ltv,
                     )
                     await bot_telegram.send_message(
                         message,
                         show_keyboard=False,
                         show_typing=True,
                     )
-                    await self.do_reach_target_tvl()
+                    await self.do_reach_target_ltv()
 
-                elif current_tvl > Config._max_tvl:
-                    message = "❗️ TVL too high ❗️\n"
+                elif current_ltv > Config._max_ltv:
+                    message = "❗️ LTV too high ❗️\n"
                     message += "Max is : <code>{}%</code> Current is : <code>{}%</code>".format(
-                        Config._max_tvl,
-                        current_tvl,
+                        Config._max_ltv,
+                        current_ltv,
                     )
                     await bot_telegram.send_message(
                         message,
                         show_keyboard=False,
                         show_typing=True,
                     )
-                    await self.do_reach_target_tvl()
+                    await self.do_reach_target_ltv()
                 else:
                     Config._log.info("nothing to do")
 
@@ -449,74 +449,74 @@ class Main:
         )
         return await Anchor.do_trx(wallet, transactions)
 
-    async def change_tvl(self, **kwargs):
+    async def change_ltv(self, **kwargs):
         try:
-            new_tvl = kwargs["new_tvl"]
-            type_tvl = kwargs["type_tvl"]
-            old_tvl = 0
+            new_ltv = kwargs["new_ltv"]
+            type_ltv = kwargs["type_ltv"]
+            old_ltv = 0
 
-            if type_tvl == TVL_TYPE.TARGET:
-                if new_tvl > Config._min_tvl and new_tvl < Config._max_tvl:
-                    old_tvl = Config._target_tvl
-                    Config._target_tvl = new_tvl
+            if type_ltv == LTV_TYPE.TARGET:
+                if new_ltv > Config._min_ltv and new_ltv < Config._max_ltv:
+                    old_ltv = Config._target_ltv
+                    Config._target_ltv = new_ltv
                 else:
                     raise AnchorException(
                         inspect.currentframe().f_code.co_name,
                         -1,
-                        "Target({}%) TVL must be higher than MIN({}%) and lower than MAX({}%)".format(
-                            new_tvl,
-                            Config._min_tvl,
-                            Config._max_tvl,
+                        "Target({}%) LTV must be higher than MIN({}%) and lower than MAX({}%)".format(
+                            new_ltv,
+                            Config._min_ltv,
+                            Config._max_ltv,
                         ),
                     )
 
-            elif type_tvl == TVL_TYPE.MIN:
-                if new_tvl < Config._target_tvl and new_tvl < Config._max_tvl:
-                    old_tvl = Config._min_tvl
-                    Config._min_tvl = new_tvl
+            elif type_ltv == LTV_TYPE.MIN:
+                if new_ltv < Config._target_ltv and new_ltv < Config._max_ltv:
+                    old_ltv = Config._min_ltv
+                    Config._min_ltv = new_ltv
                 else:
                     raise AnchorException(
                         inspect.currentframe().f_code.co_name,
                         -1,
-                        "Min({}%) TVL must be lower than Target({}%) and lower than MAX({}%)".format(
-                            new_tvl,
-                            Config._target_tvl,
-                            Config._max_tvl,
+                        "Min({}%) LTV must be lower than Target({}%) and lower than MAX({}%)".format(
+                            new_ltv,
+                            Config._target_ltv,
+                            Config._max_ltv,
                         ),
                     )
 
-            elif type_tvl == TVL_TYPE.MAX:
-                if new_tvl > Config._target_tvl and new_tvl > Config._min_tvl:
-                    old_tvl = Config._max_tvl
-                    Config._max_tvl = new_tvl
+            elif type_ltv == LTV_TYPE.MAX:
+                if new_ltv > Config._target_ltv and new_ltv > Config._min_ltv:
+                    old_ltv = Config._max_ltv
+                    Config._max_ltv = new_ltv
                 else:
                     raise AnchorException(
                         inspect.currentframe().f_code.co_name,
                         -1,
-                        "Max({}%) TVL must be higher than Min({}%) and higher than Target({}%)".format(
-                            new_tvl,
-                            Config._min_tvl,
-                            Config._target_tvl,
+                        "Max({}%) LTV must be higher than Min({}%) and higher than Target({}%)".format(
+                            new_ltv,
+                            Config._min_ltv,
+                            Config._target_ltv,
                         ),
                     )
             else:
                 raise AnchorException(
                     inspect.currentframe().f_code.co_name,
                     -1,
-                    "unknow TVL type",
+                    "unknow LTV type",
                 )
 
-            tvl = "Target"
-            if type_tvl == TVL_TYPE.MIN:
-                tvl = "Min"
-            elif type_tvl == TVL_TYPE.MAX:
-                tvl = "Max"
+            ltv = "Target"
+            if type_ltv == LTV_TYPE.MIN:
+                ltv = "Min"
+            elif type_ltv == LTV_TYPE.MAX:
+                ltv = "Max"
 
             await bot_telegram.send_message(
-                "{} TVL changed from <code>{}%</code> to <code>{}%</code>".format(
-                    tvl,
-                    old_tvl,
-                    new_tvl,
+                "{} LTV changed from <code>{}%</code> to <code>{}%</code>".format(
+                    ltv,
+                    old_ltv,
+                    new_ltv,
                 )
             )
 

@@ -7,27 +7,27 @@ from aiogram.types.message import ParseMode
 from Observable import Observable
 from aiogram import Bot, Dispatcher, types
 from aiogram.dispatcher import FSMContext
-from action import Action, TVL_TYPE
+from action import Action, LTV_TYPE
 from helper import Helper
 from config import Config
 
 
 ANCHOR_INFOS = "💱 Anchor infos"
 WALLET_INFOS = "👛 Wallet infos"
-CHANGE_TARGET_TVL = "✏️ Target TVL 🟢"
-CHANGE_MIN_TVL = "✏️ Min TVL 🟠"
-CHANGE_MAX_TVL = "✏️ Max TVL 🔴"
+CHANGE_TARGET_LTV = "✏️ Target LTV 🟢"
+CHANGE_MIN_LTV = "✏️ Min LTV 🟠"
+CHANGE_MAX_LTV = "✏️ Max LTV 🔴"
 CLAIM_REWARDS = "🎁 Claim rewards"
 DEPOSIT_AMOUNT = "⬆️ Deposit Amount"
 WITHDRAW_AMOUNT = "⬇️ Withdraw Amount"
-FETCH_TVL = "🎯 Reach the Target TVL"
+FETCH_LTV = "🎯 Reach the Target LTV"
 
 
 class Form(StatesGroup):
-    change_target_tvl = State()
-    change_min_tvl = State()
-    change_max_tvl = State()
-    reach_tvl = State()
+    change_target_ltv = State()
+    change_min_ltv = State()
+    change_max_ltv = State()
+    reach_ltv = State()
     claim_rewards = State()
     deposit_amount = State()
     withdraw_amount = State()
@@ -45,8 +45,8 @@ dp = Dispatcher(bot, storage=storage)
 events = Event()
 
 keyboard_main_menu = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-keyboard_main_menu.add(ANCHOR_INFOS, FETCH_TVL, WALLET_INFOS)
-keyboard_main_menu.add(CHANGE_MIN_TVL, CHANGE_TARGET_TVL, CHANGE_MAX_TVL)
+keyboard_main_menu.add(ANCHOR_INFOS, FETCH_LTV, WALLET_INFOS)
+keyboard_main_menu.add(CHANGE_MIN_LTV, CHANGE_TARGET_LTV, CHANGE_MAX_LTV)
 keyboard_main_menu.add(DEPOSIT_AMOUNT, WITHDRAW_AMOUNT, CLAIM_REWARDS)
 
 
@@ -79,39 +79,39 @@ async def get_wallet_infos(message: types.Message):
 
 @dp.message_handler(
     lambda message: message.text
-    and FETCH_TVL in message.text
+    and FETCH_LTV in message.text
     and message.chat.id == Config._telegram_chat_id
 )
 async def get_wallet_infos(message: types.Message, state: FSMContext):
-    await state.set_data({"from": Form.reach_tvl.state})
+    await state.set_data({"from": Form.reach_ltv.state})
     await ask_to_confirm(message, state)
 
 
 @dp.message_handler(
     lambda message: message.text
-    and ( (CHANGE_TARGET_TVL == message.text)
-        or (CHANGE_MIN_TVL == message.text)
-        or (CHANGE_MAX_TVL == message.text) )
+    and ( (CHANGE_TARGET_LTV == message.text)
+        or (CHANGE_MIN_LTV == message.text)
+        or (CHANGE_MAX_LTV == message.text) )
     and message.chat.id == Config._telegram_chat_id
 )
-async def get_change_tvl(message: types.Message, state: FSMContext):
+async def get_change_ltv(message: types.Message, state: FSMContext):
     try:
         form_state = None
-        type_tvl = None
-        if (CHANGE_MIN_TVL == message.text):
-            form_state = Form.change_min_tvl
-            type_tvl = TVL_TYPE.MIN
-        elif (CHANGE_TARGET_TVL == message.text):
-            form_state = Form.change_target_tvl
-            type_tvl = TVL_TYPE.TARGET
-        elif (CHANGE_MAX_TVL == message.text):
-            form_state = Form.change_max_tvl
-            type_tvl = TVL_TYPE.MAX
+        type_ltv = None
+        if (CHANGE_MIN_LTV == message.text):
+            form_state = Form.change_min_ltv
+            type_ltv = LTV_TYPE.MIN
+        elif (CHANGE_TARGET_LTV == message.text):
+            form_state = Form.change_target_ltv
+            type_ltv = LTV_TYPE.TARGET
+        elif (CHANGE_MAX_LTV == message.text):
+            form_state = Form.change_max_ltv
+            type_ltv = LTV_TYPE.MAX
 
-        if (form_state is not None and type_tvl is not None):
+        if (form_state is not None and type_ltv is not None):
             await form_state.set()
             await state.set_data(
-                {"from": form_state.state, "type_tvl": type_tvl}
+                {"from": form_state.state, "type_ltv": type_ltv}
             )
             await message.reply(
                 "Please set the new value :",
@@ -123,21 +123,21 @@ async def get_change_tvl(message: types.Message, state: FSMContext):
         Config._log.exception(e)
 
 
-@dp.message_handler(state=Form.change_target_tvl)
-@dp.message_handler(state=Form.change_min_tvl)
-@dp.message_handler(state=Form.change_max_tvl)
-async def change_min_tvl_callback(message: types.Message, state: FSMContext):
+@dp.message_handler(state=Form.change_target_ltv)
+@dp.message_handler(state=Form.change_min_ltv)
+@dp.message_handler(state=Form.change_max_ltv)
+async def change_min_ltv_callback(message: types.Message, state: FSMContext):
     try:
         await state.reset_state(with_data=False)
-        new_tvl = message.text
-        if Helper.is_number(new_tvl) == True:
-            new_tvl = float(new_tvl)
-            if new_tvl > 0 and new_tvl <= Config.MAX_ALLOWED_TVL:
-                await state.update_data({"value": new_tvl})
+        new_ltv = message.text
+        if Helper.is_number(new_ltv) == True:
+            new_ltv = float(new_ltv)
+            if new_ltv > 0 and new_ltv <= Config.MAX_ALLOWED_LTV:
+                await state.update_data({"value": new_ltv})
                 await ask_to_confirm(message, state)
             else:
                 await message.answer(
-                    "Wrong value, please specify a TVL between 0 and {}".format(Config.MAX_ALLOWED_TVL),
+                    "Wrong value, please specify a LTV between 0 and {}".format(Config.MAX_ALLOWED_LTV),
                     reply_markup=keyboard_main_menu,
                 )
 
@@ -270,19 +270,19 @@ async def confirm_callback(message: types.Message, state: FSMContext):
             await send_message("ok", False)
             form_from = datas.get("from", None)
             if form_from is not None:
-                # FETCH TVL
-                if form_from == Form.reach_tvl.state:
-                    await events.async_set(Action.FETCH_TVL)
-                # CHANGE_TVL
+                # FETCH LTV
+                if form_from == Form.reach_ltv.state:
+                    await events.async_set(Action.FETCH_LTV)
+                # CHANGE_LTV
                 elif (
-                    form_from == Form.change_target_tvl.state
-                    or form_from == Form.change_min_tvl.state
-                    or form_from == Form.change_max_tvl.state
+                    form_from == Form.change_target_ltv.state
+                    or form_from == Form.change_min_ltv.state
+                    or form_from == Form.change_max_ltv.state
                 ):
                     await events.async_set(
-                        Action.CHANGE_TVL,
-                        new_tvl=datas.get("value", None),
-                        type_tvl=datas.get("type_tvl", None),
+                        Action.CHANGE_LTV,
+                        new_ltv=datas.get("value", None),
+                        type_ltv=datas.get("type_ltv", None),
                     )
                 # CLAIM REWARDS
                 elif form_from == Form.claim_rewards.state:

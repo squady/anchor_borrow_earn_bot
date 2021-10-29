@@ -1,7 +1,7 @@
 # Anchor borrow bot
 
-The purpose of this bot is to manage the borrowing on Anchor, it pays back if the TVL is too high and it borrows if the TVL is too low. \
-It is possible to view the status of the borrowing via telegram, claim rewards, adjust the TVL...
+The purpose of this bot is to manage the borrowing on Anchor, it pays back if the LTV is too high and it borrows if the LTV is too low. \
+It is possible to view the status of the borrowing via telegram, claim rewards, adjust the LTV...
 
 # How to configure
 Copy the `env_sample` to `.env` file, and change the values to your needs.
@@ -29,13 +29,13 @@ UST_MIN_AMOUNT_ALERT=10
 
 **CHAIN_ID**
 > terra chain id to use :
-> - columbus-4 ***mainnet***
-> - tequila-0004 ***tequila testnet***
+> - columbus-5 ***mainnet***
+> - bombay-12 ***bombay testnet***
 
 **CHAIN_URL**
 > terra chain url to use :
-> - https://fcd.terra.dev ***mainnet***
-> - https://tequila-lcd.terra.dev ***tequila testnet***
+> - https://lcd.terra.dev ***mainnet***
+> - https://bombay-lcd.terra.dev ***bombay testnet***
 
 **ANCHOR_mmCustody**
 > Anchor mmCustody contract address to use :
@@ -45,17 +45,17 @@ UST_MIN_AMOUNT_ALERT=10
 **Mantle_endpoint**
 > Mantle endpoint to get borrow APY :
 > - https://mantle.anchorprotocol.com ***mainnet***
-> - https://tequila-mantle.anchorprotocol.com ***tequila testnet***
+> - https://bombay-mantle.terra.dev ***bombay testnet***
 
 
 **TARGET_TVL**
-> the target TVL for your borrow
+> the target LTV for your borrow
 
 **MAX_TVL**
-> the MAX TVL allowed for your borrow. If the TVL go higher, the bot set automatically the TVL to the target by paying back
+> the MAX LTV allowed for your borrow. If the LTV go higher, the bot set automatically the LTV to the target by paying back
 
 **MIN_TVL**
-> the MIN TVL allowed for your borrow. If the TVL go lower, the bot set automatically the TVL to the target by borrowing more
+> the MIN LTV allowed for your borrow. If the LTV go lower, the bot set automatically the LTV to the target by borrowing more
 
 **TELEGRAM_TOKEN**
 > the telegram token of your bot
@@ -87,10 +87,10 @@ then \
 # What can it do
 
 ## Show your Anchor datas
-- current TVL
-- Target TVL
-- Max allowed TVL
-- Min allowed TVL
+- current LTV
+- Target LTV
+- Max allowed LTV
+- Min allowed LTV
 - Current bLuna price
 - Liquidation price
 - Borrowed amount
@@ -112,32 +112,32 @@ then \
 
 ![image](./imgs/wallet.png)
 
-## Set the MIN TVL allowed
+## Set the MIN LTV allowed
 
- The bot ask you to enter the value of the new **MIN** TVL allowed. \
- The value must be **lower** than the current **target** TVL and **lower** than the **MAX** TVL
+ The bot ask you to enter the value of the new **MIN** LTV allowed. \
+ The value must be **lower** than the current **target** LTV and **lower** than the **MAX** LTV
 
 ![image](./imgs/min_tvl.png)
 
 
-## Set the Target TVL
+## Set the Target LTV
 
- The bot ask you to enter the value of the new **target** TVL. \
- The value must be **higher** than the **MIN** TVL and **lower** than the **MAX** TVL
+ The bot ask you to enter the value of the new **target** LTV. \
+ The value must be **higher** than the **MIN** LTV and **lower** than the **MAX** LTV
 
 ![image](./imgs/target_tvl.png)
 
 
- ## Set the MAX TVL allowed
+ ## Set the MAX LTV allowed
 
- The bot ask you to enter the value of the new **MAX** TVL allowed. \
- The value must be **higher** than the current **target** TVL and **higher** than the **MIN** TVL
+ The bot ask you to enter the value of the new **MAX** LTV allowed. \
+ The value must be **higher** than the current **target** LTV and **higher** than the **MIN** LTV
 
 ![image](./imgs/max_tvl.png)
 
 
-## Force to set the TVL to the target
-The bot will repay or borrow to reach the target TVL. \
+## Force to set the LTV to the target
+The bot will repay or borrow to reach the target LTV. \
 If the bot is borrowing, it will deposit automatically the amount to Earn
 
 ![image](./imgs/fetch_tvl_1.png)

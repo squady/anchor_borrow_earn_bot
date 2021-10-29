@@ -176,8 +176,8 @@ class Anchor:
 
         return pending_rewards
 
-    async def get_current_tvl(wallet_address, borrow_value=None, borrow_limit=None):
-        current_tvl = None
+    async def get_current_ltv(wallet_address, borrow_value=None, borrow_limit=None):
+        current_ltv = None
 
         if borrow_value is None:
             borrow_value = await Anchor.get_borrow_value(wallet_address)
@@ -186,12 +186,12 @@ class Anchor:
 
         if borrow_value != 0 and borrow_limit != 0:
             # (v1*100/v2)
-            current_tvl = round((borrow_value * 100) / (borrow_limit * Config._maximum_tvl_allowed), 2)
+            current_ltv = round((borrow_value * 100) / (borrow_limit * Config._maximum_ltv_allowed), 2)
 
-        return current_tvl
+        return current_ltv
 
     async def get_amount_to_repay(
-        wallet_address, target_tvl, borrow_value=None, borrow_limit=None
+        wallet_address, target_ltv, borrow_value=None, borrow_limit=None
     ):
         amount_to_repay = None
         try:
@@ -201,7 +201,7 @@ class Anchor:
                 borrow_limit = await Anchor.get_borrow_limit(wallet_address)
 
             amount_to_repay = int(
-                borrow_value - ((target_tvl * (borrow_limit * Config._maximum_tvl_allowed)) / 100)
+                borrow_value - ((target_ltv * (borrow_limit * Config._maximum_ltv_allowed)) / 100)
             )
 
         except Exception as e:
@@ -211,7 +211,7 @@ class Anchor:
         return amount_to_repay
 
     async def get_amount_to_borrow(
-        wallet_address, target_tvl, borrow_value=None, borrow_limit=None
+        wallet_address, target_ltv, borrow_value=None, borrow_limit=None
     ):
         amount_to_borrow = None
         try:
@@ -221,7 +221,7 @@ class Anchor:
                 borrow_limit = await Anchor.get_borrow_limit(wallet_address)
 
             amount_to_borrow = int(
-                ((target_tvl * (borrow_limit * Config._maximum_tvl_allowed)) / 100) - borrow_value
+                ((target_ltv * (borrow_limit * Config._maximum_ltv_allowed)) / 100) - borrow_value
             )
 
         except Exception as e:
