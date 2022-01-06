@@ -20,7 +20,7 @@ class TerraChain:
                     "",
                     None,
                     gas_prices={"uusd": usd_gas_price},
-                    gas_adjustment=1.4,
+                    gas_adjustment=1.8,
                     fee_denoms=["uusd"],
                 )
             else:
