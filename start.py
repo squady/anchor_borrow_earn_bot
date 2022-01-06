@@ -343,7 +343,9 @@ class Main:
         )
         transactions = []
         if uusd_amount_in_wallet < amount_to_repay:
-            earn_balance = await Anchor.get_balance_on_earn(wallet_address)
+            exchange_rate = await Anchor.get_exchange_rate()
+            ausd_balance = await Anchor.get_balance_on_earn(wallet_address)
+            earn_balance = exchange_rate * ausd_balance 
             if uusd_amount_in_wallet + earn_balance < amount_to_repay:
                 if earn_balance > Helper.to_terra_value(10):
                     transactions.append(
