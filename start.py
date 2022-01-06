@@ -123,10 +123,11 @@ class Main:
             bluna_amount = results[4]
             bluna_price = round(results[5], 2)
 
-            liquidation_price = round(
-                (borrow_value * Config._maximum_ltv_allowed) / bluna_amount,
-                2,
-            )
+            if bluna_amount != 0:
+                liquidation_price = round(
+                    (borrow_value * Config._maximum_ltv_allowed) / bluna_amount,
+                    2,
+                )
             if borrow_value != 0 and borrow_limit != 0:
                 current_ltv = await Anchor.get_current_ltv(
                     wallet_address, borrow_value, borrow_limit
