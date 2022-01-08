@@ -2,10 +2,13 @@ import os
 import sys
 import logging
 import base64
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path=".env")
 
 
 class Config:
-    VERSION = "2.0.6"
+    VERSION = "2.0.7"
     _log = logging.getLogger("anchor_borrow")
     formatter = logging.Formatter(
         "%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",

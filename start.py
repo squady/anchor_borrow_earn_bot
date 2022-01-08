@@ -1,8 +1,5 @@
 from terra_chain import TerraChain
 from helper import Helper
-from dotenv import load_dotenv
-
-load_dotenv(dotenv_path=".env")
 
 import sys
 import asyncio
